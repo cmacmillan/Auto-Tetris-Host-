@@ -83,6 +83,7 @@ public class AI
         byte retr = (byte)((piece.orientation<<4)|(offsetSign<<3)|(desiredOffsetMagnitude));
         while(piece.moveDown(grid));
         grid.addPiece(piece);
+        grid.clearLines();
         return retr;
         //return (byte)((1<<4)|(1<<3)|(7));
         //orientation offsetSign mag
