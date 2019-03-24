@@ -8,27 +8,20 @@ public class Grid
     public int columnCount;
     public bool[][] cells;
 
-    public static bool GridDiff(Grid grid1, Grid grid2, out Grid grid1uniquefeatures, out Grid grid2uniquefeatures){
-        int width = grid1.columnCount;
-        int height = grid1.rowCount;
-        bool anyDiffPresent =false;
-        grid1uniquefeatures = new Grid(height,width);
-        grid2uniquefeatures = new Grid(height,width);
+    public int DoGridsMatch(Grid otherGrid){
+        int width = this.columnCount;
+        int height = this.rowCount;
+        int errorCount=0;
         for (int x = 0; x < height; x++)
         {
             for (int y = 0; y < width; y++)
             {
-                if (grid1.cells[x][y]==grid2.cells[x][y]){
-                    grid1uniquefeatures.cells[x][y]=false;
-                    grid2uniquefeatures.cells[x][y]=false;
-                } else {
-                    anyDiffPresent = true;
-                    grid1uniquefeatures.cells[x][y]=grid1.cells[x][y];
-                    grid2uniquefeatures.cells[x][y]=grid2.cells[x][y];
+                if (this.cells[x][y]!=otherGrid.cells[x][y]){
+                    errorCount++;
                 }
             }
         }
-        return anyDiffPresent;
+        return errorCount;
     }
     public Grid(int rows, int columns)
     {

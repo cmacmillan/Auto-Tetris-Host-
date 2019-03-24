@@ -72,6 +72,7 @@ public class ImageParser
                                     int rowCount,
                                     float blackBrightnessLowerBound,
                                     float blackBrightnessUpperBound,
+                                    int plusMinusSpread,
                                     bool areCellsInited=false){
         //initing cells if not already correctly allocated
         if (!areCellsInited){
@@ -82,12 +83,18 @@ public class ImageParser
                 int xPixelPos = startingX+x*cellWidth;
                 int yPixelPos = startingY+y*cellHeight;
                 var cellColor = image.getPixel(xPixelPos,yPixelPos);
+                var cellColorPlus = image.getPixel(xPixelPos+plusMinusSpread,yPixelPos);
+                var cellColorMinus = image.getPixel(xPixelPos-plusMinusSpread,yPixelPos);
                 var brightness = cellBrightness(cellColor);
-                if (brightness<blackBrightnessLowerBound || brightness>blackBrightnessUpperBound){
-                    //cells[rowCount-y-1][columnCount-x-1]=false;//ugh backwards? stupid grid code
-                    cells[rowCount-y-1][x]=false;//ugh backwards? stupid grid code
+                var brightness2 = cellBrightness(cellColorPlus);
+                var brightness3 = cellBrightness(cellColorMinus);
+                int brightnessCount=0;
+                brightnessCount += (brightness<blackBrightnessLowerBound || brightness>blackBrightnessUpperBound)?0:1;
+                brightnessCount += (brightness2<blackBrightnessLowerBound || brightness2>blackBrightnessUpperBound)?0:1;
+                brightnessCount += (brightness3<blackBrightnessLowerBound || brightness3>blackBrightnessUpperBound)?0:1;
+                if (brightnessCount<2){
+                    cells[rowCount-y-1][x]=false;
                 } else {
-                    //cells[rowCount-y-1][columnCount-x-1]=true;
                     cells[rowCount-y-1][x]=true;
                 }
             }

@@ -17,8 +17,10 @@ public class GridManager : MonoBehaviour
     public float tileWidth;
     public float stepTime;
     private float stepTimer;
+    public TextMesh stateText;
     private Piece piece;
     public List<SpriteRenderer> stackcubes;
+    public List<SpriteRenderer> stackcubes2;
     public Texture2D tetrisSampleTex;
     [Range(0,1)]
     public float blackClipLowerBound = .6f;
@@ -29,6 +31,7 @@ public class GridManager : MonoBehaviour
     {
         piece = null;
         grid1 = new Grid(20, 10);
+        grid2 = grid1.clone();
         tileImages = new GameObject[grid1.rowCount][];
         errorTileImages = new GameObject[grid1.rowCount][];
         tileSprites = new SpriteRenderer[grid1.rowCount][];
@@ -109,12 +112,27 @@ public class GridManager : MonoBehaviour
     void Start()
     {
         //texReader = new TextureReader(tetrisSampleTex);
+        currentState = ProgramState.ManualControl;
         WebCamTexture webTex = new WebCamTexture(WebCamTexture.devices[1].name);
         //WebCamTexture webTex = new WebCamTexture("OBS-Camera");
         //WebCamTexture webTex = new WebCamTexture("obs-virtualcam");
         /*foreach (var i in WebCamTexture.devices){
             Debug.Log(i.name);
         }*/
+        List<int> testlist1 = new List<int>();
+        List<int> testlist2 = new List<int>();
+        testlist1.Add(1);
+        testlist1.Add(2);
+        testlist1.Add(3);
+        testlist2.Add(2);
+        testlist2.Add(3);
+        testlist2.Add(4);
+        if (!hasUpNextChanged(testlist1,testlist2)){
+            Debug.Log("error!");
+        } else {
+            Debug.Log("passed!");
+        }
+
         webTex.Play();
         texReader = new WebCamTextureReader(webTex);
         parser = new ImageParser();
@@ -150,83 +168,125 @@ public class GridManager : MonoBehaviour
         drawGrid(grid1);
     }
     List<int> upNext;
-    bool hasStarted=false;
-    int isRetrying=0;
-    public int maxRetries = 5;
+    //bool hasStarted=false;
+    //int isRetrying=0;
+    //public int maxRetries = 5;
 
-    //byte nextMove = 0;
+    ProgramState currentState;
+    public int retryCounter=0;
+    public int maxRetries = 100;
+    enum ProgramState{
+        ManualControl=0,
+        GettingInitialBoardInfo=1,
+        Playing=2,
+        RetryingUpdateGrid=3,
+        
+    };
+
+    private int errorCount=0;
+    private bool doesListContainAnyBlack(List<int> upNextColors){
+        foreach (var i in upNextColors){
+            if (i==-1){
+                return true;
+            }
+        }
+        return false;
+    }
+    private void makeNextMove(Grid gridToReadFrom,Grid gridToWriteTo){
+        byte nextMove = ai.getNextMove(gridToReadFrom,gridToWriteTo, upNext.Take(2).Select(a => Piece.getPieceFromIndex(a)).ToList());
+        serialPort.Write(new byte[1] { nextMove }, 0, 1);
+    }
+    public float stackErrorsAllowed=2;
+
+    List<int> nextUpNext;
     void Update()
     {
-        //parser.updateGridWithImage(texReader,grid,742,94,48,48,10,20,blackClipLowerBound,blackClipUpperBound,false);
-        if (Input.GetKeyDown(KeyCode.A)){
-            serialPort.Write(new byte[1]{(byte)(1<<7)},0,1);
+        stateText.text = currentState.ToString()+"| Errors:"+errorCount;
+        if (upNext!=null && nextUpNext!=null){
+            drawUpNext();
+            drawNextUpNext();
         }
-        
-        if (Input.GetKeyDown(KeyCode.S)){
-            hasStarted=!hasStarted;
-        }
-        /*stepTimer+=Time.deltaTime;
-        if (stepTimer>stepTime){
-            stepTimer=0;
-            runStep();
-            drawGrid();
-        }*/
-        if (hasStarted){
-            texReader.update();
-            if (upNext==null){//first time we just wanna grab the up next
+        switch (currentState){
+            case ProgramState.ManualControl:
+                if (Input.GetKey(KeyCode.A)){
+                    serialPort.Write(new byte[1]{(byte)(1<<7)},0,1);
+                }
+                if (Input.GetKeyDown(KeyCode.S)){
+                    currentState = ProgramState.GettingInitialBoardInfo;
+                }
+                break;
+            case ProgramState.GettingInitialBoardInfo:
+                texReader.update();
                 upNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
-                drawStack();
-            }
-            else
-            {
-                List<int> nextUpNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
-                if (hasUpNextChanged(nextUpNext, upNext)||isRetrying>0)
-                {
-                    parser.updateGridWithImage(texReader, grid1, 742, 94, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, false);
-                    Grid grid1uniquefeatures;
-                    Grid grid2uniquefeatures;
-                    if (isRetrying<maxRetries && upNext!=null && grid2!=null && Grid.GridDiff(grid1,grid2,out grid1uniquefeatures,out grid2uniquefeatures)){
-                        //hasStarted=false;
-                        isRetrying++;
-                        //drawGrid(grid1uniquefeatures);
-                        //drawGrid(grid2uniquefeatures,true);
-                        drawGrid(grid1);
-                        drawGrid(grid2,true);
+                if (!doesListContainAnyBlack(upNext)){
+                    currentState = ProgramState.Playing;
+                }
+                break;
+            case ProgramState.Playing:
+                texReader.update();
+                nextUpNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
+                if (hasUpNextChanged(upNext,nextUpNext)){
+                    parser.updateGridWithImage(texReader, grid1, 742, 94, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
+                    drawGrid(grid1);
+                    drawGrid(grid2,true);
+                    int doGridsMatch=grid1.DoGridsMatch(grid2);
+                    //errorCount+=doGridsMatch;
+                    if (doGridsMatch>0){
+                        currentState = ProgramState.RetryingUpdateGrid;
                     } else {
-                        isRetrying=0;
+                        retryCounter=0;
                         grid2 = grid1.clone();
-                        if (upNext == null)
-                        {
-                            upNext = new List<int>();
-                        }
-                        else
-                        {
-                            byte nextMove = ai.getNextMove(grid2, upNext.Take(2).Select(a => Piece.getPieceFromIndex(a)).ToList());
-                            //grid.addPiece(ai.best(grid,upNext.Take(2).Select(a=>Piece.getPieceFromIndex(a)).ToList()));
-                            serialPort.Write(new byte[1] { nextMove }, 0, 1);
-                        }
+                        makeNextMove(grid1,grid2);
                         upNext = nextUpNext;
-                        drawStack();
-                        drawGrid(grid1);
-                        drawGrid(grid2,true);
                     }
                 }
-            }
+                break;
+            case ProgramState.RetryingUpdateGrid:
+                texReader.update();
+                //nextUpNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
+                parser.updateGridWithImage(texReader, grid1, 742, 94, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, 7, false);
+                drawGrid(grid1);
+                drawGrid(grid2, true);
+                int doGridsMatch2=grid1.DoGridsMatch(grid2);
+                if (doGridsMatch2 == 0 || retryCounter > maxRetries)
+                {
+                    retryCounter = 0;
+                    grid2 = grid1.clone();
+                    makeNextMove(grid1, grid2);
+                    upNext = nextUpNext;
+                    currentState = ProgramState.Playing;
+                }
+                else
+                {
+                    retryCounter++;
+                }
+                break;
         }
     }
-    public void drawStack()
+    public void drawUpNext()
     {
         for (int i = 0; i < upNext.Count; i++)
         {
             stackcubes[i].color = parser.colors.Where(a => a.Value == upNext[i]).First().Key;
         }
     }
-    public bool hasUpNextChanged(List<int> list1, List<int> list2){
-        for (int i=0;i<list1.Count;i++){
-            if (list1[i]!=list2[i]){
-                return true;    
+    public void drawNextUpNext()
+    {
+        for (int i = 0; i < nextUpNext.Count; i++)
+        {
+            stackcubes2[i].color = parser.colors.Where(a => a.Value == nextUpNext[i]).First().Key;
+        }
+    }
+    public bool hasUpNextChanged(List<int> oldList, List<int> newList){
+        int errorCount=0;
+        for (int i=1;i<oldList.Count;i++){
+            if (oldList[i]!=newList[i-1]){
+                errorCount++;
+                if (errorCount>stackErrorsAllowed){
+                    return false;
+                }
             }
         }
-        return false;
+        return true;
     }
 }

@@ -73,17 +73,17 @@ public class AI
         return this._best(grid,workingPieces,0).piece;
     }
 
-    public byte getNextMove(Grid grid,List<Piece> workingPieces){
-        var piece = best(grid,workingPieces);
+    public byte getNextMove(Grid gridToReadFrom, Grid gridToWriteTo,List<Piece> workingPieces){
+        var piece = best(gridToReadFrom,workingPieces);
         int startingPosition=5-Mathf.CeilToInt(piece.dimension/2.0f);
         int desiredOffset = (startingPosition-piece.columnPosition);
         int offsetSign = desiredOffset<=0?1:0;
         int desiredOffsetMagnitude = Mathf.Abs(desiredOffset);
         //Debug.Log("NEXT MOVE- Position:"+desiredOffset+" Rotation:"+piece.orientation);
         byte retr = (byte)((piece.orientation<<4)|(offsetSign<<3)|(desiredOffsetMagnitude));
-        while(piece.moveDown(grid));
-        grid.addPiece(piece);
-        grid.clearLines();
+        while(piece.moveDown(gridToWriteTo));
+        gridToWriteTo.addPiece(piece);
+        gridToWriteTo.clearLines();
         return retr;
         //return (byte)((1<<4)|(1<<3)|(7));
         //orientation offsetSign mag
