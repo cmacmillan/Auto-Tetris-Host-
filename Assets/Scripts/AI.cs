@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class AI
@@ -69,24 +70,111 @@ public class AI
         retr.piece = best;
         return retr;
     }
-    public Piece best(Grid grid, List<Piece> workingPieces){
-        return this._best(grid,workingPieces,0).piece;
+    public Piece best(Grid grid, List<Piece> workingPieces,out float score){
+        var val = this._best(grid,workingPieces,0);
+        score = val.score;
+        return val.piece;
     }
 
-    public byte getNextMove(Grid gridToReadFrom, Grid gridToWriteTo,List<Piece> workingPieces){
-        var piece = best(gridToReadFrom,workingPieces);
+    public byte getNextMove(Grid gridToReadFrom, Grid gridToWriteTo,List<Piece> workingPieces,ref Piece storedPiece){
+        List<Piece> AIPieceInput = new List<Piece>();
+        float score;
+        float bestScore;
+        Piece bestMove;
+        Piece currPiece;
+        bool shouldSwap=false;
+        ///First, then second
+        bestMove = best(gridToReadFrom,workingPieces.Take(2).ToList(),out score);
+        bestScore = score;
+        ///Possibilities that involve using an stored piece
+        if (storedPiece != null)
+        {
+            ///Swap, then use second
+            AIPieceInput.Add(storedPiece);
+            AIPieceInput.Add(workingPieces[1]);
+            currPiece = best(gridToReadFrom, AIPieceInput, out score);
+            if (score > bestScore)
+            {
+                shouldSwap=true;
+                bestScore = score;
+                bestMove = currPiece;
+            }
+            ////Swap, then swap back
+            AIPieceInput.Clear();
+            AIPieceInput.Add(storedPiece);
+            AIPieceInput.Add(workingPieces[0]);
+            currPiece = best(gridToReadFrom, AIPieceInput, out score);
+            if (score > bestScore)
+            {
+                shouldSwap = true;
+                bestScore = score;
+                bestMove = currPiece;
+            }
+            ////First, use stored piece
+            AIPieceInput.Clear();
+            AIPieceInput.Add(workingPieces[0]);
+            AIPieceInput.Add(storedPiece);
+            currPiece = best(gridToReadFrom, AIPieceInput, out score);
+            if (score > bestScore)
+            {
+                ///we don't set swap here because the next AI cycle will decide if we actually swap
+                bestScore = score;
+                bestMove = currPiece;
+            }
+        }
+        else //If no stored piece exists yet
+        {
+            //store a piece, then use second and thirt
+            AIPieceInput.Clear();
+            AIPieceInput.Add(workingPieces[1]);
+            AIPieceInput.Add(workingPieces[2]);
+            currPiece = best(gridToReadFrom, AIPieceInput, out score);
+            if (score > bestScore)
+            {
+                shouldSwap = true;
+                bestScore = score;
+                bestMove = currPiece;
+            }
+            //store a piece, use second then swap out
+            AIPieceInput.Clear();
+            AIPieceInput.Add(workingPieces[1]);
+            AIPieceInput.Add(workingPieces[0]);
+            currPiece = best(gridToReadFrom, AIPieceInput, out score);
+            if (score > bestScore)
+            {
+                shouldSwap = true;
+                bestScore = score;
+                bestMove = currPiece;
+            }
+            //use first piece, store second, use third
+            AIPieceInput.Clear();
+            AIPieceInput.Add(workingPieces[0]);
+            AIPieceInput.Add(workingPieces[2]);
+            currPiece = best(gridToReadFrom, AIPieceInput, out score);
+            if (score > bestScore)
+            {
+                ///we don't set swap here because the next AI cycle will decide if we actually swap
+                bestScore = score;
+                bestMove = currPiece;
+            }
+        }
+        var piece = bestMove;
+        if (shouldSwap){
+            storedPiece = workingPieces[0];
+        }
+        ////Format byte before writing it to microcontroller
         int startingPosition=5-Mathf.CeilToInt(piece.dimension/2.0f);
         int desiredOffset = (startingPosition-piece.columnPosition);
         int offsetSign = desiredOffset<=0?1:0;
         int desiredOffsetMagnitude = Mathf.Abs(desiredOffset);
-        //Debug.Log("NEXT MOVE- Position:"+desiredOffset+" Rotation:"+piece.orientation);
-        byte retr = (byte)((piece.orientation<<4)|(offsetSign<<3)|(desiredOffsetMagnitude));
+        int swapShift = shouldSwap?(1<<6):0;
+        byte retr = (byte)((swapShift)|(piece.orientation<<4)|(offsetSign<<3)|(desiredOffsetMagnitude));
+        //////////////////////////////////////
+        ///get what the board should look like
         while(piece.moveDown(gridToWriteTo));
         gridToWriteTo.addPiece(piece);
         gridToWriteTo.clearLines();
+        //////////////////////////////////////
         return retr;
-        //return (byte)((1<<4)|(1<<3)|(7));
-        //orientation offsetSign mag
-        //01 1 111
     }
 }

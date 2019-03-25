@@ -192,8 +192,9 @@ public class GridManager : MonoBehaviour
         }
         return false;
     }
+    Piece storedPiece = null;
     private void makeNextMove(Grid gridToReadFrom,Grid gridToWriteTo){
-        byte nextMove = ai.getNextMove(gridToReadFrom,gridToWriteTo, upNext.Take(2).Select(a => Piece.getPieceFromIndex(a)).ToList());
+        byte nextMove = ai.getNextMove(gridToReadFrom,gridToWriteTo, upNext.Take(3).Select(a => Piece.getPieceFromIndex(a)).ToList(),ref storedPiece);
         serialPort.Write(new byte[1] { nextMove }, 0, 1);
     }
     public float stackErrorsAllowed=2;
@@ -202,7 +203,7 @@ public class GridManager : MonoBehaviour
     void Update()
     {
         if (upNext!=null && nextUpNext!=null){
-            stateText.text = currentState.ToString()+"| Dropping:"+parser.colorIndexToName[upNext[0]];
+            stateText.text = currentState.ToString()+"| stored:"+(storedPiece!=null);//"| Dropping:"+parser.colorIndexToName[upNext[0]];
             drawUpNext();
             drawNextUpNext();
         }
