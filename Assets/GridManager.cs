@@ -201,8 +201,8 @@ public class GridManager : MonoBehaviour
     List<int> nextUpNext;
     void Update()
     {
-        stateText.text = currentState.ToString()+"| Errors:"+errorCount;
         if (upNext!=null && nextUpNext!=null){
+            stateText.text = currentState.ToString()+"| Dropping:"+parser.colorIndexToName[upNext[0]];
             drawUpNext();
             drawNextUpNext();
         }
@@ -217,14 +217,17 @@ public class GridManager : MonoBehaviour
                 break;
             case ProgramState.GettingInitialBoardInfo:
                 texReader.update();
-                upNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
+                //upNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
+                upNext = parser.getUpNextColors(texReader,1260,135,1256,228,82,5,30,22);
+                drawUpNext();
                 if (!doesListContainAnyBlack(upNext)){
                     currentState = ProgramState.Playing;
                 }
                 break;
             case ProgramState.Playing:
                 texReader.update();
-                nextUpNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
+                //nextUpNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
+                nextUpNext = parser.getUpNextColors(texReader,1260,135,1256,228,82,5,30,22);
                 if (hasUpNextChanged(upNext,nextUpNext)){
                     parser.updateGridWithImage(texReader, grid1, 742, 94, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
                     drawGrid(grid1);

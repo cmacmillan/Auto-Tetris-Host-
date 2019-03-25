@@ -20,6 +20,8 @@ public class ImageParser
         {new Color32((byte)0,(byte)0,(byte)0,(byte)255),-1}//"Black"}
     };
 
+    public string[] colorIndexToName=new string[7]{"yellow","blue","orange","red","green","purple","light blue"};
+
 
     public int getClosestColor(Color32 sampledPixel){
         float currentBestDistance=0.0f;
@@ -40,15 +42,39 @@ public class ImageParser
                Mathf.Pow((color1.b-color2.b),2);
     }
 
-    public List<int> getUpNextColors(IPixelReadable image,int topX,int topY,int cellHeight,int rowCount,int secondSquareHeightOffset){
+    public List<int> getUpNextColors(IPixelReadable image,int topX,int topY,int topX2,int topY2,int cellHeight,int rowCount,int secondSquareHeightOffset,int secondSquareHeightOffset2){
         var retr = new List<int>();
+        //get top one
+        int yPixelPos1 = (topY);
+        int yPixelPos2 = (yPixelPos1+secondSquareHeightOffset);
+        Color32 cell1Color = image.getPixel(topX,1080-yPixelPos1);
+        Color32 cell2Color = image.getPixel(topX,1080-yPixelPos2);
+        int color1Name = getClosestColor(cell1Color);
+        int color2Name = getClosestColor(cell2Color);
+        if (color1Name == -1 && color2Name == -1)
+        {
+            retr.Add(-1);
+        }
+        else if (color1Name == -1)
+        {
+            retr.Add(color2Name);
+        }
+        else if (color2Name == -1)
+        {
+            retr.Add(color1Name);
+        }
+        else
+        {
+            retr.Add(color1Name);
+        }
+        //get rest
         for (int y=0;y<rowCount;y++){
-            int yPixelPos1 = (topY+cellHeight*y);
-            int yPixelPos2 = (yPixelPos1+secondSquareHeightOffset);
-            Color32 cell1Color = image.getPixel(topX,1080-yPixelPos1);
-            Color32 cell2Color = image.getPixel(topX,1080-yPixelPos2);
-            int color1Name = getClosestColor(cell1Color);
-            int color2Name = getClosestColor(cell2Color);
+            yPixelPos1 = (topY2+cellHeight*y);
+            yPixelPos2 = (yPixelPos1+secondSquareHeightOffset2);
+            cell1Color = image.getPixel(topX2,1080-yPixelPos1);
+            cell2Color = image.getPixel(topX2,1080-yPixelPos2);
+            color1Name = getClosestColor(cell1Color);
+            color2Name = getClosestColor(cell2Color);
             if (color1Name==-1 && color2Name==-1){
                 retr.Add(-1);
             } else if (color1Name==-1){
@@ -144,10 +170,13 @@ public class WebCamTextureReader:IPixelReadable{
         this.tex = tex;
         width = tex.width;
         //colors = holder.GetPixels();
+        if (colors==null){
+            colors = new Color32[tex.height*tex.width];
+        }
         update();
     }
     public void update(){
-        colors = tex.GetPixels32();
+        colors = tex.GetPixels32(colors);
     }
     public Color32 getPixel(int x, int y){
         return colors[x+y*width];
