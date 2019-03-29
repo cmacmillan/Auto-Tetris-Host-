@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class Grid
 {
@@ -70,6 +71,21 @@ public class Grid
         }
         return distance;
     }
+    public bool isOneCellAwayFromALine(int rowIndex){
+        bool haveEncounteredAMissingCell=false;
+        for (int i = 0; i < this.columnCount; i++)
+        {
+            if (this.cells[rowIndex][i] == false)
+            {
+                if (haveEncounteredAMissingCell){
+                    return false;
+                } else {
+                    haveEncounteredAMissingCell=true;
+                }
+            }
+        }
+        return true;
+    }
     public bool isLine(int rowIndex)
     {
         for (int i = 0; i < this.columnCount; i++)
@@ -105,6 +121,50 @@ public class Grid
         for (; i < this.rowCount && this.isEmptyRow(i); i++) ;//damn the fucking madman
         return i;
     }*/
+    
+    ///<summary>a well is defined as a pit with a width of 1,
+    ///cells don't contribute to a well's depth unless they are the only missing element in the row,
+    ///Also only the deepest well is counted</summary>
+    public int depthOfDeepestWell(out int bestIndex){
+        int currentBestDepth=0;
+        int currentBestIndex=-1;
+        for (int i=0;i<columnCount;i++){
+            int currDepth=0;
+            int height = rowCount-columnHeight(i)-1;
+            while (height>=0){
+                if (isOneCellAwayFromALine(height)){
+                    currDepth++;
+                }
+                height--;
+            }
+            if (currDepth>currentBestDepth){
+                currentBestDepth = currDepth;
+                currentBestIndex = i;
+            }
+        }
+        bestIndex = currentBestIndex;
+        return currentBestDepth;
+    }
+    public int mappedLineCount(int lines){
+        switch (lines){
+            case 0:
+                return 0;
+            case 1:
+                //return 0;
+                return 1;
+            case 2:
+                //return 0;
+                return 3;
+            case 3:
+                //return 0;
+                return 5;
+            case 4:
+                //return 1;
+                return 8;
+            default:
+                return 0;
+        }
+    }
     public int lineCount()
     {
         int count = 0;

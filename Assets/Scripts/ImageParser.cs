@@ -22,7 +22,6 @@ public class ImageParser
 
     public string[] colorIndexToName=new string[7]{"yellow","blue","orange","red","green","purple","light blue"};
 
-
     public int getClosestColor(Color32 sampledPixel){
         float currentBestDistance=0.0f;
         int currentBestIndex = -1;

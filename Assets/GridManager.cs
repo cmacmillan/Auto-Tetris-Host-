@@ -141,7 +141,10 @@ public class GridManager : MonoBehaviour
         serialPort.Open();
         InitGrid();
         //addNewPiece(0);
-        ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f);
+        //ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f);
+        //ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f,0.0f);
+        //ai = new AI(0.5623381f, 0.3907313f, 0.6533304f, 0.2938918f,-0.1337608f);
+        ai = new AI(0.3854164f, 0.4151678f, 0.5825204f, 0.2002547f,.5474103f);
         //piece = Piece.getPieceFromIndex(0);
         //upNextPiece = new List<Piece>();
         //upNextPiece.Add(piece);
@@ -200,8 +203,25 @@ public class GridManager : MonoBehaviour
     public float stackErrorsAllowed=2;
 
     List<int> nextUpNext;
+    bool breaker = false;
     void Update()
     {
+        /*if (!breaker){
+            breaker = true;
+            (new Tuner()).tune();
+            return;
+        }*/
+        if (true){
+            texReader.update();
+            //parser.updateGridWithImage(texReader, grid1, 742, 94, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
+            parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
+            int index=-1;
+            Debug.Log(grid1.depthOfDeepestWell(out index)+"|"+index);
+            drawGrid(grid1,false);
+            upNext = parser.getUpNextColors(texReader,1260,135,1256,228,82,5,30,22);
+            drawUpNext();
+            return;
+        }
         if (upNext!=null && nextUpNext!=null){
             stateText.text = currentState.ToString()+"| stored:"+(storedPiece!=null);//"| Dropping:"+parser.colorIndexToName[upNext[0]];
             drawUpNext();
@@ -230,7 +250,7 @@ public class GridManager : MonoBehaviour
                 //nextUpNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
                 nextUpNext = parser.getUpNextColors(texReader,1260,135,1256,228,82,5,30,22);
                 if (hasUpNextChanged(upNext,nextUpNext)){
-                    parser.updateGridWithImage(texReader, grid1, 742, 94, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
+                    parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
                     drawGrid(grid1);
                     drawGrid(grid2,true);
                     int doGridsMatch=grid1.DoGridsMatch(grid2);
@@ -248,7 +268,7 @@ public class GridManager : MonoBehaviour
             case ProgramState.RetryingUpdateGrid:
                 texReader.update();
                 //nextUpNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
-                parser.updateGridWithImage(texReader, grid1, 742, 94, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, 7, false);
+                parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, 7, false);
                 drawGrid(grid1);
                 drawGrid(grid2, true);
                 int doGridsMatch2=grid1.DoGridsMatch(grid2);

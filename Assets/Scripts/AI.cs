@@ -6,15 +6,26 @@ using UnityEngine;
 
 public class AI
 {
+    public float fitness=0.0f;
     public float heightWeight;
     public float linesWeight;
     public float holesWeight;
     public float bumpinessWeight;
-    public AI(float heightWeight,float linesWeight,float holesWeight,float bumpinessWeight){
+    public float wellWeight;
+    public AI(float heightWeight,float linesWeight,float holesWeight,float bumpinessWeight,float wellWeight){
         this.heightWeight = heightWeight;
         this.linesWeight = linesWeight;
         this.holesWeight = holesWeight;
         this.bumpinessWeight = bumpinessWeight;
+        this.wellWeight = wellWeight;
+    }
+    public string getText(){
+        string retr = heightWeight+"|"+
+        linesWeight+"|"+
+        holesWeight+"|"+
+        bumpinessWeight+"|"+
+        wellWeight+"|";
+        return retr;
     }
     public struct ScoreAndPiece{
         public Piece piece;
@@ -49,7 +60,9 @@ public class AI
                     int lineCount = _grid.lineCount();
                     int holeCount = _grid.holeCount();
                     int bumpiness = _grid.bumpiness();
-                    score = -this.heightWeight * cumHeight + this.linesWeight *lineCount - this.holesWeight * holeCount - this.bumpinessWeight * bumpiness;
+                    int wellIndex;
+                    int wellDepth = _grid.depthOfDeepestWell(out wellIndex);
+                    score = -this.heightWeight * cumHeight + this.linesWeight *lineCount - this.holesWeight * holeCount - this.bumpinessWeight * bumpiness + this.wellWeight*wellDepth;
              }
                 else
                 {
