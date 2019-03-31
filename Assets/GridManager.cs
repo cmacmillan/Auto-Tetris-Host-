@@ -211,7 +211,7 @@ public class GridManager : MonoBehaviour
             (new Tuner()).tune();
             return;
         }*/
-        if (true){
+        /*if (true){
             texReader.update();
             //parser.updateGridWithImage(texReader, grid1, 742, 94, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
             parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
@@ -221,7 +221,7 @@ public class GridManager : MonoBehaviour
             upNext = parser.getUpNextColors(texReader,1260,135,1256,228,82,5,30,22);
             drawUpNext();
             return;
-        }
+        }*/
         if (upNext!=null && nextUpNext!=null){
             stateText.text = currentState.ToString()+"| stored:"+(storedPiece!=null);//"| Dropping:"+parser.colorIndexToName[upNext[0]];
             drawUpNext();

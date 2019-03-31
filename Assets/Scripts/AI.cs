@@ -131,6 +131,7 @@ public class AI
             if (score > bestScore)
             {
                 ///we don't set swap here because the next AI cycle will decide if we actually swap
+                shouldSwap = false;
                 bestScore = score;
                 bestMove = currPiece;
             }
@@ -167,6 +168,7 @@ public class AI
             if (score > bestScore)
             {
                 ///we don't set swap here because the next AI cycle will decide if we actually swap
+                shouldSwap = false;
                 bestScore = score;
                 bestMove = currPiece;
             }

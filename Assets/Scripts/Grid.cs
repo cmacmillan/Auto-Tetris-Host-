@@ -160,7 +160,7 @@ public class Grid
                 return 5;
             case 4:
                 //return 1;
-                return 8;
+                return 30;
             default:
                 return 0;
         }
