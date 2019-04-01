@@ -82,11 +82,12 @@ public class Tuner
                 var score = 0;
                 var numberOfMoves = 0;
                 while((numberOfMoves++) < maxNumberOfMoves && !grid.isGridFull()){
-                    if (numberOfMoves%howManyMovesBetweenGarbageLines==garbageAdvancedWarningTurns){//a few turns before dumping the garbage, add it to the grid so they have time to defend themself
+                    if (numberOfMoves%howManyMovesBetweenGarbageLines==(howManyMovesBetweenGarbageLines-garbageAdvancedWarningTurns)){//a few turns before dumping the garbage, add it to the grid so they have time to defend themself
                         grid.incomingDangerousPieces = garbageLinesToGive;
                     }
                     if (numberOfMoves%howManyMovesBetweenGarbageLines==0){
                         grid.AddGarbageLines(grid.incomingDangerousPieces);
+                        grid.incomingDangerousPieces=0;
                     }
                     float scoreTest;
                     bool shouldSwap;//DON'T FORGET ABOUT ME!!! *thanks past self*
@@ -193,7 +194,7 @@ public class Tuner
         var count = 0;
         while(true){
             System.GC.Collect();
-            if (count>5){
+            if (count>8){
                 break;
             }
             //GC.Collect();

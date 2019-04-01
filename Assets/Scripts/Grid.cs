@@ -79,7 +79,7 @@ public class Grid
                 }
             }
         }
-        this.incomingDangerousPieces = Mathf.Max(0,this.incomingDangerousPieces-distance);
+        this.incomingDangerousPieces = Mathf.Max(0,this.incomingDangerousPieces-mappedLineCount(distance));
         return distance;
     }
     public bool isOneCellAwayFromALine(int rowIndex){
@@ -196,17 +196,13 @@ public class Grid
             case 0:
                 return 0;
             case 1:
-                //return 0;
-                return 1;
+                return 0;
             case 2:
-                //return 0;
-                return 3;
+                return 1;
             case 3:
-                //return 0;
-                return 5;
+                return 2;
             case 4:
-                //return 1;
-                return 8;
+                return 4;
             default:
                 return 0;
         }
