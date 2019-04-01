@@ -204,7 +204,7 @@ public class GridManager : MonoBehaviour
         }*/
         if (!breaker){
             breaker = true;
-            (new Tuner(15,30,15)).tune();
+            (new Tuner(18,70,15)).tune();
             return;
         }
         /*if (true){
