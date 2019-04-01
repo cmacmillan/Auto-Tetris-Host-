@@ -97,14 +97,10 @@ public class GridManager : MonoBehaviour
             }
         }*/
     }
-    //public List<Piece> upNextPiece;
     void addNewPiece(int index)
     {
         var p = Piece.getPieceFromIndex(index);
         piece = p;
-        //upNextPiece[0]=upNextPiece[1];
-        //upNextPiece[1] = Piece.getPieceFromIndex(index);
-        //piece = ai.best(grid,upNextPiece);
     }
     ImageParser parser;
     WebCamTextureReader texReader;
@@ -137,21 +133,14 @@ public class GridManager : MonoBehaviour
         texReader = new WebCamTextureReader(webTex);
         parser = new ImageParser();
         serialPort = new SerialPort("COM4");
-        //serialPort.PortName = "\\\\.\\COM4";
         serialPort.Open();
         InitGrid();
         //addNewPiece(0);
         //ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f);
-        ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f,0.0f);
-        //ai = new AI(0.5623381f, 0.3907313f, 0.6533304f, 0.2938918f,-0.1337608f);
-        //ai = new AI(0.3854164f, 0.4151678f, 0.5825204f, 0.2002547f,.5474103f);
-        //piece = Piece.getPieceFromIndex(0);
-        //upNextPiece = new List<Piece>();
-        //upNextPiece.Add(piece);
-        //upNextPiece.Add(Piece.getPieceFromIndex(1));
+        //ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f,0.0f);
+        ai = new AI(0.3854164f, 0.4151678f, 0.5825204f, 0.2002547f,.5474103f);
 
         provider = new ImageProvider();
-        //parser.updateGridWithImage(texReader,grid,742,94,48,48,10,20,blackClipLowerBound,blackClipUpperBound,false);
         drawGrid(grid1);
     }
     ImageProvider provider;
@@ -171,9 +160,6 @@ public class GridManager : MonoBehaviour
         drawGrid(grid1);
     }
     List<int> upNext;
-    //bool hasStarted=false;
-    //int isRetrying=0;
-    //public int maxRetries = 5;
 
     ProgramState currentState;
     public int retryCounter=0;
@@ -195,14 +181,21 @@ public class GridManager : MonoBehaviour
         }
         return false;
     }
-    //Piece storedPiece = null;
+    public int counts=0;
+    public long total;
     private void makeNextMove(Grid gridToReadFrom,Grid gridToWriteTo){
+        //System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+        //watch.Start();
         byte nextMove = ai.getNextMove(gridToReadFrom,gridToWriteTo, upNext.Take(3).Select(a => Piece.getPieceFromIndex(a)).ToList());
         if (hasStoredPieceYet==false && gridToReadFrom.storedPiece!=null){
             hasStoredPieceYet=true;
             isUsingStorePieceForFirstTime=true;
         }
         serialPort.Write(new byte[1] { nextMove }, 0, 1);
+        /*watch.Stop();
+        total+=watch.ElapsedMilliseconds;
+        counts++;
+        Debug.Log("average of "+total/counts+"ms");*/
     }
     public float stackErrorsAllowed=2;
 

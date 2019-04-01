@@ -64,7 +64,7 @@ public class AI
                     int bumpiness = _grid.bumpiness();
                     int wellIndex;
                     int wellDepth = _grid.depthOfDeepestWell(out wellIndex);
-                    score = -this.heightWeight * cumHeight + this.linesWeight *lineCount - this.holesWeight * holeCount - this.bumpinessWeight * bumpiness;// + this.wellWeight*wellDepth;
+                    score = -this.heightWeight * cumHeight + this.linesWeight *lineCount - this.holesWeight * holeCount - this.bumpinessWeight * bumpiness + this.wellWeight*wellDepth;
                 }
                 else//Recurse
                 {
