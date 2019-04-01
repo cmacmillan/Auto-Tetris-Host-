@@ -142,9 +142,9 @@ public class GridManager : MonoBehaviour
         InitGrid();
         //addNewPiece(0);
         //ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f);
-        //ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f,0.0f);
+        ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f,0.0f);
         //ai = new AI(0.5623381f, 0.3907313f, 0.6533304f, 0.2938918f,-0.1337608f);
-        ai = new AI(0.3854164f, 0.4151678f, 0.5825204f, 0.2002547f,.5474103f);
+        //ai = new AI(0.3854164f, 0.4151678f, 0.5825204f, 0.2002547f,.5474103f);
         //piece = Piece.getPieceFromIndex(0);
         //upNextPiece = new List<Piece>();
         //upNextPiece.Add(piece);
@@ -195,15 +195,20 @@ public class GridManager : MonoBehaviour
         }
         return false;
     }
-    Piece storedPiece = null;
+    //Piece storedPiece = null;
     private void makeNextMove(Grid gridToReadFrom,Grid gridToWriteTo){
-        byte nextMove = ai.getNextMove(gridToReadFrom,gridToWriteTo, upNext.Take(3).Select(a => Piece.getPieceFromIndex(a)).ToList(),ref storedPiece);
+        byte nextMove = ai.getNextMove(gridToReadFrom,gridToWriteTo, upNext.Take(3).Select(a => Piece.getPieceFromIndex(a)).ToList());
+        if (hasStoredPieceYet==false && gridToReadFrom.storedPiece!=null){
+            hasStoredPieceYet=true;
+            isUsingStorePieceForFirstTime=true;
+        }
         serialPort.Write(new byte[1] { nextMove }, 0, 1);
     }
     public float stackErrorsAllowed=2;
 
     List<int> nextUpNext;
-    bool breaker = false;
+    bool hasStoredPieceYet=false;
+    bool isUsingStorePieceForFirstTime=false;
     void Update()
     {
         /*if (!breaker){
@@ -223,7 +228,7 @@ public class GridManager : MonoBehaviour
             return;
         }*/
         if (upNext!=null && nextUpNext!=null){
-            stateText.text = currentState.ToString()+"| stored:"+(storedPiece!=null);//"| Dropping:"+parser.colorIndexToName[upNext[0]];
+            stateText.text = currentState.ToString()+"| stored:"+(grid1.storedPiece!=null?grid1.storedPiece.getPieceName():"---");//"| Dropping:"+parser.colorIndexToName[upNext[0]];
             drawUpNext();
             drawNextUpNext();
         }
@@ -250,17 +255,27 @@ public class GridManager : MonoBehaviour
                 //nextUpNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
                 nextUpNext = parser.getUpNextColors(texReader,1260,135,1256,228,82,5,30,22);
                 if (hasUpNextChanged(upNext,nextUpNext)){
-                    parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
-                    drawGrid(grid1);
-                    drawGrid(grid2,true);
-                    int doGridsMatch=grid1.DoGridsMatch(grid2);
-                    //errorCount+=doGridsMatch;
-                    if (doGridsMatch>0){
-                        currentState = ProgramState.RetryingUpdateGrid;
-                    } else {
-                        retryCounter=0;
-                        grid2 = grid1.clone();
-                        makeNextMove(grid1,grid2);
+                    if (!isUsingStorePieceForFirstTime){
+                        parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, 7, false);
+                        drawGrid(grid1);
+                        drawGrid(grid2, true);
+                        int doGridsMatch = grid1.DoGridsMatch(grid2);
+                        //errorCount+=doGridsMatch;
+                        if (doGridsMatch > 0)
+                        {
+                            currentState = ProgramState.RetryingUpdateGrid;
+                        }
+                        else
+                        {
+                            retryCounter = 0;
+                            grid2 = grid1.clone();
+                            makeNextMove(grid1, grid2);
+                            upNext = nextUpNext;
+                        }
+                    }
+                    else
+                    {
+                        isUsingStorePieceForFirstTime=false;
                         upNext = nextUpNext;
                     }
                 }

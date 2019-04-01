@@ -8,6 +8,7 @@ public class Grid
     public int rowCount;
     public int columnCount;
     public bool[][] cells;
+    public Piece storedPiece=null;
 
     public int DoGridsMatch(Grid otherGrid){
         int width = this.columnCount;
@@ -43,6 +44,9 @@ public class Grid
             {
             _grid.cells[r][c] = this.cells[r][c];
             }
+        }
+        if (this.storedPiece!=null){
+            _grid.storedPiece=this.storedPiece.clone();
         }
         return _grid;
     }
@@ -160,7 +164,7 @@ public class Grid
                 return 5;
             case 4:
                 //return 1;
-                return 30;
+                return 8;
             default:
                 return 0;
         }

@@ -18,6 +18,31 @@ public class Piece
         this.orientation = 0;
     }
 
+    public static string[] pieceNames= new string[7]{"Square","J","L","Z","S","T","I"};
+    public static bool doPiecesMatch(Piece p1, Piece p2){
+        if (p1.dimension!=p2.dimension){
+            return false;
+        }
+        for (int i=0;i<p1.dimension;i++){
+            for (int j=0;j<p1.dimension;j++){
+                if (p1.cells[i][j]!=p2.cells[i][j]){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    ///<summary>Requires piece to be unrotated</summary>
+    public string getPieceName(){
+        for (int i=0;i<7;i++){
+            var testPiece = getPieceFromIndex(i);
+            if (doPiecesMatch(this,testPiece)){
+                return pieceNames[i];
+            }
+        }
+        return "Unknown";
+    }
+
     public static Piece getPieceFromIndex(int index)
     {
         Piece piece;

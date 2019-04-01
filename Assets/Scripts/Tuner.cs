@@ -73,7 +73,8 @@ public class Tuner:MonoBehaviour
                 var numberOfMoves = 0;
                 while((numberOfMoves++) < maxNumberOfMoves && !grid.isGridFull()){
                     float scoreTest;
-                    workingPiece = ai.best(grid, workingPieces,out scoreTest);
+                    bool shouldSwap;//DON'T FORGET ABOUT ME!!!!!
+                    workingPiece = ai.best(grid, workingPieces,out scoreTest,out shouldSwap);
                     while(workingPiece.moveDown(grid));
                     grid.addPiece(workingPiece);
                     score += grid.mappedLineCount(grid.clearLines());

@@ -30,31 +30,33 @@ public class AI
     public struct ScoreAndPiece{
         public Piece piece;
         public float score;
+        public bool shouldSwap;
     }
-    public ScoreAndPiece _best(Grid grid, List<Piece> workingPieces, int workingPieceIndex){
+
+    public ScoreAndPiece _subBest(Grid grid, List<Piece> workingPieces,int workingPieceIndex,bool shouldGetExtraMove=false){
         Piece best = null;
         float? bestScore = null;
         Piece workingPiece = workingPieces[workingPieceIndex];
-        for (var rotation = 0; rotation < 4; rotation++)
+        for (var rotation = 0; rotation < 4; rotation++)//for each rotation of a piece
         {
             var _piece = workingPiece.clone();
-            for (var i = 0; i < rotation; i++)
+            for (var i = 0; i < rotation; i++)//set that rotation
             {
                 _piece.rotate(grid);
             }
 
-            while (_piece.moveLeft(grid)) ;
+            while (_piece.moveLeft(grid)) ;//then move it all the way left
 
             while (grid.valid(_piece))
             {
                 var _pieceSet = _piece.clone();
-                while (_pieceSet.moveDown(grid)) ;
+                while (_pieceSet.moveDown(grid)) ;//then drop the piece
 
                 var _grid = grid.clone();
-                _grid.addPiece(_pieceSet);
+                _grid.addPiece(_pieceSet);//add the piece to the board
 
                 float? score = null;
-                if (workingPieceIndex == (workingPieces.Count - 1))
+                if (workingPieceIndex == (workingPieces.Count - (shouldGetExtraMove?1:2)))//rate that board state
                 {
                     int cumHeight = _grid.cumulativeHeight();
                     int lineCount = _grid.lineCount();
@@ -62,11 +64,11 @@ public class AI
                     int bumpiness = _grid.bumpiness();
                     int wellIndex;
                     int wellDepth = _grid.depthOfDeepestWell(out wellIndex);
-                    score = -this.heightWeight * cumHeight + this.linesWeight *lineCount - this.holesWeight * holeCount - this.bumpinessWeight * bumpiness + this.wellWeight*wellDepth;
-             }
-                else
+                    score = -this.heightWeight * cumHeight + this.linesWeight *lineCount - this.holesWeight * holeCount - this.bumpinessWeight * bumpiness;// + this.wellWeight*wellDepth;
+                }
+                else//Recurse
                 {
-                    score = this._best(_grid, workingPieces, workingPieceIndex + 1).score;
+                    score = this._best(_grid, workingPieces, workingPieceIndex + 1,shouldGetExtraMove).score;
                 }
 
                 if (score > bestScore || bestScore == null)
@@ -75,107 +77,63 @@ public class AI
                     best = _piece.clone();
                 }
 
-                _piece.columnPosition++;
+                _piece.columnPosition++;//move the piece over 1 until it stops being 'valid', because it hits the right border
             }
         }
         ScoreAndPiece retr;
         retr.score = bestScore.HasValue?bestScore.Value:0;
         retr.piece = best;
+        retr.shouldSwap=false;
         return retr;
     }
-    public Piece best(Grid grid, List<Piece> workingPieces,out float score){
-        var val = this._best(grid,workingPieces,0);
+    public ScoreAndPiece _best(Grid grid, List<Piece> workingPieces, int workingPieceIndex,bool shouldGetExtraMove){
+        if (grid.storedPiece==null){
+            var swapGrid = grid.clone();
+            swapGrid.storedPiece = workingPieces[workingPieceIndex].clone();
+            var result1 = _subBest(swapGrid,workingPieces,workingPieceIndex+1,true);//swap
+            result1.shouldSwap=true;
+            var result2 = _subBest(grid,workingPieces,workingPieceIndex,shouldGetExtraMove);//no swap
+            result2.shouldSwap=false;
+            if (result1.score>result2.score){
+                return result1;
+            }
+            return result2;
+        } else {
+            var stored = grid.storedPiece;
+            var swapGrid = grid.clone();
+            List<Piece> swapWorkingPieces = new List<Piece>(workingPieces);
+            swapGrid.storedPiece = swapWorkingPieces[workingPieceIndex].clone();
+            swapWorkingPieces[workingPieceIndex]=stored.clone();
+            var result1 = _subBest(swapGrid,swapWorkingPieces,workingPieceIndex,shouldGetExtraMove);//swap
+            result1.shouldSwap = true;
+            var result2 = _subBest(grid,workingPieces,workingPieceIndex,shouldGetExtraMove);//no swap
+            result2.shouldSwap = false;
+            if (result1.score>result2.score){
+                return result1;
+            }
+            return result2;
+        }
+    }
+    public Piece best(Grid grid, List<Piece> workingPieces,out float score,out bool shouldSwap){
+        var val = this._best(grid,workingPieces,0,false);
         score = val.score;
+        shouldSwap = val.shouldSwap;
         return val.piece;
     }
 
-    public byte getNextMove(Grid gridToReadFrom, Grid gridToWriteTo,List<Piece> workingPieces,ref Piece storedPiece){
+    public byte getNextMove(Grid gridToReadFrom, Grid gridToWriteTo,List<Piece> workingPieces){
         List<Piece> AIPieceInput = new List<Piece>();
         float score;
+        bool shouldSwap;
         float bestScore;
         Piece bestMove;
         Piece currPiece;
-        bool shouldSwap=false;
         ///First, then second
-        bestMove = best(gridToReadFrom,workingPieces.Take(2).ToList(),out score);
-        bestScore = score;
-        ///Possibilities that involve using an stored piece
-        if (storedPiece != null)
-        {
-            ///Swap, then use second
-            AIPieceInput.Add(storedPiece);
-            AIPieceInput.Add(workingPieces[1]);
-            currPiece = best(gridToReadFrom, AIPieceInput, out score);
-            if (score > bestScore)
-            {
-                shouldSwap=true;
-                bestScore = score;
-                bestMove = currPiece;
-            }
-            ////Swap, then swap back
-            AIPieceInput.Clear();
-            AIPieceInput.Add(storedPiece);
-            AIPieceInput.Add(workingPieces[0]);
-            currPiece = best(gridToReadFrom, AIPieceInput, out score);
-            if (score > bestScore)
-            {
-                shouldSwap = true;
-                bestScore = score;
-                bestMove = currPiece;
-            }
-            ////First, use stored piece
-            AIPieceInput.Clear();
-            AIPieceInput.Add(workingPieces[0]);
-            AIPieceInput.Add(storedPiece);
-            currPiece = best(gridToReadFrom, AIPieceInput, out score);
-            if (score > bestScore)
-            {
-                ///we don't set swap here because the next AI cycle will decide if we actually swap
-                shouldSwap = false;
-                bestScore = score;
-                bestMove = currPiece;
-            }
-        }
-        else //If no stored piece exists yet
-        {
-            //store a piece, then use second and thirt
-            AIPieceInput.Clear();
-            AIPieceInput.Add(workingPieces[1]);
-            AIPieceInput.Add(workingPieces[2]);
-            currPiece = best(gridToReadFrom, AIPieceInput, out score);
-            if (score > bestScore)
-            {
-                shouldSwap = true;
-                bestScore = score;
-                bestMove = currPiece;
-            }
-            //store a piece, use second then swap out
-            AIPieceInput.Clear();
-            AIPieceInput.Add(workingPieces[1]);
-            AIPieceInput.Add(workingPieces[0]);
-            currPiece = best(gridToReadFrom, AIPieceInput, out score);
-            if (score > bestScore)
-            {
-                shouldSwap = true;
-                bestScore = score;
-                bestMove = currPiece;
-            }
-            //use first piece, store second, use third
-            AIPieceInput.Clear();
-            AIPieceInput.Add(workingPieces[0]);
-            AIPieceInput.Add(workingPieces[2]);
-            currPiece = best(gridToReadFrom, AIPieceInput, out score);
-            if (score > bestScore)
-            {
-                ///we don't set swap here because the next AI cycle will decide if we actually swap
-                shouldSwap = false;
-                bestScore = score;
-                bestMove = currPiece;
-            }
-        }
+        bestMove = best(gridToReadFrom,workingPieces.Take(3).ToList(),out score,out shouldSwap);
+        
         var piece = bestMove;
         if (shouldSwap){
-            storedPiece = workingPieces[0];
+            gridToReadFrom.storedPiece = workingPieces[0];
         }
         ////Format byte before writing it to microcontroller
         int startingPosition=5-Mathf.CeilToInt(piece.dimension/2.0f);
