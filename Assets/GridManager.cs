@@ -83,7 +83,7 @@ public class GridManager : MonoBehaviour
                 setCellColor(i,j, g.cells[i][j] ? Color.green : Color.grey,drawToErrorGrid);
             }
         }
-        /*if (piece != null)
+        if (piece != null)
         {
             for (int i = 0; i < piece.cells.Length; i++)
             {
@@ -95,7 +95,7 @@ public class GridManager : MonoBehaviour
                     }
                 }
             }
-        }*/
+        }
     }
     void addNewPiece(int index)
     {
@@ -107,27 +107,8 @@ public class GridManager : MonoBehaviour
     AI ai;
     void Start()
     {
-        //texReader = new TextureReader(tetrisSampleTex);
         currentState = ProgramState.ManualControl;
         WebCamTexture webTex = new WebCamTexture(WebCamTexture.devices[1].name);
-        //WebCamTexture webTex = new WebCamTexture("OBS-Camera");
-        //WebCamTexture webTex = new WebCamTexture("obs-virtualcam");
-        /*foreach (var i in WebCamTexture.devices){
-            Debug.Log(i.name);
-        }*/
-        List<int> testlist1 = new List<int>();
-        List<int> testlist2 = new List<int>();
-        testlist1.Add(1);
-        testlist1.Add(2);
-        testlist1.Add(3);
-        testlist2.Add(2);
-        testlist2.Add(3);
-        testlist2.Add(4);
-        if (!hasUpNextChanged(testlist1,testlist2)){
-            Debug.Log("error!");
-        } else {
-            Debug.Log("passed!");
-        }
 
         webTex.Play();
         texReader = new WebCamTextureReader(webTex);
@@ -135,10 +116,10 @@ public class GridManager : MonoBehaviour
         serialPort = new SerialPort("COM4");
         serialPort.Open();
         InitGrid();
-        //addNewPiece(0);
+        addNewPiece(0);
         //ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f);
         //ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f,0.0f);
-        ai = new AI(0.3854164f, 0.4151678f, 0.5825204f, 0.2002547f,.5474103f);
+        ai = new AI(0.3854164f, 0.4151678f, 0.5825204f, 0.2002547f,.5474103f,0.0f);
 
         provider = new ImageProvider();
         drawGrid(grid1);
@@ -202,13 +183,30 @@ public class GridManager : MonoBehaviour
     List<int> nextUpNext;
     bool hasStoredPieceYet=false;
     bool isUsingStorePieceForFirstTime=false;
+    bool breaker=false;
+    //bool isDead=false;
     void Update()
     {
-        /*if (!breaker){
-            breaker = true;
-            (new Tuner()).tune();
+        /*if (true){
+            if (isDead){
+                Debug.Log("DEAD");
+                return;
+            }
+            if (Input.GetKeyDown(KeyCode.Space)){
+                isDead=!grid1.AddGarbageLines(2);
+            }
+            stepTimer+=Time.deltaTime;
+            if (stepTimer>stepTime){
+                stepTimer=0;
+                runStep();
+            }
             return;
         }*/
+        if (!breaker){
+            breaker = true;
+            (new Tuner(15,30,15)).tune();
+            return;
+        }
         /*if (true){
             texReader.update();
             //parser.updateGridWithImage(texReader, grid1, 742, 94, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
@@ -236,7 +234,6 @@ public class GridManager : MonoBehaviour
                 break;
             case ProgramState.GettingInitialBoardInfo:
                 texReader.update();
-                //upNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
                 upNext = parser.getUpNextColors(texReader,1260,135,1256,228,82,5,30,22);
                 drawUpNext();
                 if (!doesListContainAnyBlack(upNext)){
@@ -245,7 +242,6 @@ public class GridManager : MonoBehaviour
                 break;
             case ProgramState.Playing:
                 texReader.update();
-                //nextUpNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
                 nextUpNext = parser.getUpNextColors(texReader,1260,135,1256,228,82,5,30,22);
                 if (hasUpNextChanged(upNext,nextUpNext)){
                     if (!isUsingStorePieceForFirstTime){
@@ -253,7 +249,6 @@ public class GridManager : MonoBehaviour
                         drawGrid(grid1);
                         drawGrid(grid2, true);
                         int doGridsMatch = grid1.DoGridsMatch(grid2);
-                        //errorCount+=doGridsMatch;
                         if (doGridsMatch > 0)
                         {
                             currentState = ProgramState.RetryingUpdateGrid;
@@ -275,7 +270,6 @@ public class GridManager : MonoBehaviour
                 break;
             case ProgramState.RetryingUpdateGrid:
                 texReader.update();
-                //nextUpNext = parser.getUpNextColors(texReader, 1260, 135, 84, 6, 25);
                 parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, 7, false);
                 drawGrid(grid1);
                 drawGrid(grid2, true);

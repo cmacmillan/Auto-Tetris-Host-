@@ -9,6 +9,7 @@ public class Grid
     public int columnCount;
     public bool[][] cells;
     public Piece storedPiece=null;
+    public int incomingDangerousPieces=0;
 
     public int DoGridsMatch(Grid otherGrid){
         int width = this.columnCount;
@@ -48,7 +49,12 @@ public class Grid
         if (this.storedPiece!=null){
             _grid.storedPiece=this.storedPiece.clone();
         }
+        _grid.incomingDangerousPieces = this.incomingDangerousPieces;
         return _grid;
+    }
+
+    public int currentIncomingDangerousPieceCount(){
+        return this.incomingDangerousPieces;
     }
     public int clearLines()
     {
@@ -73,6 +79,7 @@ public class Grid
                 }
             }
         }
+        this.incomingDangerousPieces = Mathf.Max(0,this.incomingDangerousPieces-distance);
         return distance;
     }
     public bool isOneCellAwayFromALine(int rowIndex){
@@ -148,6 +155,41 @@ public class Grid
         }
         bestIndex = currentBestIndex;
         return currentBestDepth;
+    }
+
+    ///<summary>addes count lines to the grid.</summary>
+    ///<returns>Returns false if the grid is full, true otherwise</returns>
+    public bool AddGarbageLines(int numberOfGarbageLinesToAdd){
+        ///cells[row][column]
+        ///aka [y][x]
+        //start at top left corner, move across then down, shif
+        //this whole scheme assumes that higher numbers=lower on the grid, make sure to double check this
+        ///first shift everything up by count
+        for (int column = 0; column < columnCount; column++)
+        {
+            for (int row = 0; row < rowCount; row++)
+            {
+                if (cells[row][column]){
+                    if (row-numberOfGarbageLinesToAdd<=1){//if we are gonna move this cell to row 0 or 1, thats a lose 
+                        return false;
+                    } else {
+                        //then we shift the piece upward
+                        cells[row-numberOfGarbageLinesToAdd][column] = true;
+                        cells[row][column] = false;
+                    }
+                }
+            }
+        }
+        //now that everything is shifted up, we need to create garbage lines,starting from the edge moving down
+        int randomColumnIndexToLeaveHoleAt = UnityEngine.Random.Range(0,columnCount);
+        for (int column = 0; column < columnCount; column++)
+        {
+            for (int row = rowCount-numberOfGarbageLinesToAdd; row < rowCount; row++)
+            {
+                cells[row][column] = column!=randomColumnIndexToLeaveHoleAt;
+            }
+        }
+        return true;
     }
     public int mappedLineCount(int lines){
         switch (lines){

@@ -12,19 +12,22 @@ public class AI
     public float holesWeight;
     public float bumpinessWeight;
     public float wellWeight;
-    public AI(float heightWeight,float linesWeight,float holesWeight,float bumpinessWeight,float wellWeight){
+    public float incomingDangerousPiecesWeight;
+    public AI(float heightWeight,float linesWeight,float holesWeight,float bumpinessWeight,float wellWeight,float incomingDangerousPiecesWeight){
         this.heightWeight = heightWeight;
         this.linesWeight = linesWeight;
         this.holesWeight = holesWeight;
         this.bumpinessWeight = bumpinessWeight;
         this.wellWeight = wellWeight;
+        this.incomingDangerousPiecesWeight = incomingDangerousPiecesWeight;
     }
     public string getText(){
         string retr = heightWeight+"|"+
         linesWeight+"|"+
         holesWeight+"|"+
         bumpinessWeight+"|"+
-        wellWeight+"|";
+        wellWeight+"|"+
+        incomingDangerousPiecesWeight+"|";
         return retr;
     }
     public struct ScoreAndPiece{
@@ -64,7 +67,9 @@ public class AI
                     int bumpiness = _grid.bumpiness();
                     int wellIndex;
                     int wellDepth = _grid.depthOfDeepestWell(out wellIndex);
-                    score = -this.heightWeight * cumHeight + this.linesWeight *lineCount - this.holesWeight * holeCount - this.bumpinessWeight * bumpiness + this.wellWeight*wellDepth;
+                    int incomingDangerousPieces = _grid.currentIncomingDangerousPieceCount();
+                    //removed the negatives because lol why are they here
+                    score = this.heightWeight * cumHeight + this.linesWeight *lineCount + this.holesWeight * holeCount + this.bumpinessWeight * bumpiness + this.wellWeight*wellDepth+this.incomingDangerousPiecesWeight*incomingDangerousPieces;
                 }
                 else//Recurse
                 {

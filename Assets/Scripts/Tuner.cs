@@ -33,21 +33,31 @@ public class RandomPieceGenerator{
         return Piece.getPieceFromIndex(this.bag[this.index]);
     }
 }
-public class Tuner:MonoBehaviour
+public class Tuner
 {
+    public int garbageLinesToGive;
+    public int howManyMovesBetweenGarbageLines;
+    public int garbageAdvancedWarningTurns;
+    public Tuner(int garbageLineCount,int garbageLineFrequency,int warningTurns){
+        garbageLinesToGive = garbageLineCount;
+        howManyMovesBetweenGarbageLines = garbageLineFrequency;
+        garbageAdvancedWarningTurns = warningTurns;
+    }
     public int randomInteger(float min, float  max){
         return Mathf.FloorToInt(Random.value * (max - min) + min);
     }
     public void normalize(AI candidate){
-        var norm = Mathf.Sqrt(candidate.heightWeight * candidate.heightWeight + candidate.linesWeight * candidate.linesWeight + candidate.holesWeight * candidate.holesWeight + candidate.bumpinessWeight * candidate.bumpinessWeight+candidate.wellWeight*candidate.wellWeight);
+        var norm = Mathf.Sqrt(candidate.heightWeight * candidate.heightWeight + candidate.linesWeight * candidate.linesWeight + candidate.holesWeight * candidate.holesWeight + candidate.bumpinessWeight * candidate.bumpinessWeight+candidate.wellWeight*candidate.wellWeight+candidate.incomingDangerousPiecesWeight*candidate.incomingDangerousPiecesWeight);
         candidate.heightWeight /= norm;
         candidate.linesWeight /= norm;
         candidate.holesWeight /= norm;
         candidate.bumpinessWeight /= norm;
         candidate.wellWeight /= norm;
+        candidate.incomingDangerousPiecesWeight/=norm;
     }
     public AI generateRandomCandidate(){
         var retr = new AI(
+            Random.value-.5f,
             Random.value-.5f,
             Random.value-.5f,
             Random.value-.5f,
@@ -62,7 +72,7 @@ public class Tuner:MonoBehaviour
     public void computeFitnesses(List<AI> candidates, int numberOfGames, int maxNumberOfMoves){
         for(var i = 0; i < candidates.Count; i++){
             var candidate = candidates[i];
-            var ai = new AI(candidate.heightWeight, candidate.linesWeight, candidate.holesWeight, candidate.bumpinessWeight,candidate.wellWeight);
+            var ai = new AI(candidate.heightWeight, candidate.linesWeight, candidate.holesWeight, candidate.bumpinessWeight,candidate.wellWeight,candidate.incomingDangerousPiecesWeight);
             var totalScore = 0;
             for(var j = 0; j < numberOfGames; j++){
                 var grid = new Grid(22, 10);
@@ -72,16 +82,30 @@ public class Tuner:MonoBehaviour
                 var score = 0;
                 var numberOfMoves = 0;
                 while((numberOfMoves++) < maxNumberOfMoves && !grid.isGridFull()){
+                    if (numberOfMoves%howManyMovesBetweenGarbageLines==garbageAdvancedWarningTurns){//a few turns before dumping the garbage, add it to the grid so they have time to defend themself
+                        grid.incomingDangerousPieces = garbageLinesToGive;
+                    }
+                    if (numberOfMoves%howManyMovesBetweenGarbageLines==0){
+                        grid.AddGarbageLines(grid.incomingDangerousPieces);
+                    }
                     float scoreTest;
-                    bool shouldSwap;//DON'T FORGET ABOUT ME!!!!!
+                    bool shouldSwap;//DON'T FORGET ABOUT ME!!! *thanks past self*
                     workingPiece = ai.best(grid, workingPieces,out scoreTest,out shouldSwap);
+                    if (shouldSwap){
+                        grid.storedPiece = workingPieces[0];//store what is currently the 0th piece
+                    }
                     while(workingPiece.moveDown(grid));
                     grid.addPiece(workingPiece);
-                    score += grid.mappedLineCount(grid.clearLines());
+
+                    //Instead of giving out points based on line count
+                    //score += grid.mappedLineCount(grid.clearLines());
+                    //We are gonna give out a point for each piece you place, and just make sure that everyone dies eventually
+                    score++;
+
                     for(var k = 0; k < workingPieces.Count - 1; k++){
-                        workingPieces[k] = workingPieces[k + 1];
+                        workingPieces[k] = workingPieces[k + 1];//shuffle each working piece over by 1
                     }
-                    workingPieces[workingPieces.Count - 1] = rpg.nextPiece();
+                    workingPieces[workingPieces.Count - 1] = rpg.nextPiece();//get the next working piece
                     workingPiece = workingPieces[0];
                 }
                 totalScore += score;
@@ -113,18 +137,19 @@ public class Tuner:MonoBehaviour
     }
     public AI crossOver(AI candidate1,AI candidate2){
         var candidate = new AI(
-            candidate1.fitness * candidate1.heightWeight    +candidate2.fitness*candidate2.heightWeight,
-            candidate1.fitness * candidate1.linesWeight     +candidate2.fitness*candidate2.linesWeight,
-            candidate1.fitness * candidate1.holesWeight     +candidate2.fitness*candidate2.holesWeight,
-            candidate1.fitness * candidate1.bumpinessWeight +candidate2.fitness*candidate2.bumpinessWeight,
-            candidate1.fitness * candidate1.wellWeight      +candidate2.fitness*candidate2.wellWeight
+            candidate1.fitness * candidate1.heightWeight                    +candidate2.fitness*candidate2.heightWeight,
+            candidate1.fitness * candidate1.linesWeight                     +candidate2.fitness*candidate2.linesWeight,
+            candidate1.fitness * candidate1.holesWeight                     +candidate2.fitness*candidate2.holesWeight,
+            candidate1.fitness * candidate1.bumpinessWeight                 +candidate2.fitness*candidate2.bumpinessWeight,
+            candidate1.fitness * candidate1.wellWeight                      +candidate2.fitness*candidate2.wellWeight,
+            candidate1.fitness * candidate1.incomingDangerousPiecesWeight   +candidate2.fitness*candidate2.incomingDangerousPiecesWeight
         );
         normalize(candidate);
         return candidate;
     }
     public void mutate(AI candidate){
         var quantity = Random.value * 0.4f - 0.2f; // plus/minus 0.2
-        switch(randomInteger(0, 5)){
+        switch(randomInteger(0, 6)){
             case 0:
                 candidate.heightWeight += quantity;
                 break;
@@ -139,6 +164,9 @@ public class Tuner:MonoBehaviour
                 break;
             case 4:
                 candidate.wellWeight += quantity;
+                break;
+            case 5:
+                candidate.incomingDangerousPiecesWeight += quantity;
                 break;
         }
     }
