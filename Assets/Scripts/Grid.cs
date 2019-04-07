@@ -165,6 +165,9 @@ public class Grid
         //start at top left corner, move across then down, shif
         //this whole scheme assumes that higher numbers=lower on the grid, make sure to double check this
         ///first shift everything up by count
+        if (numberOfGarbageLinesToAdd<=0){
+            return true;
+        }
         for (int column = 0; column < columnCount; column++)
         {
             for (int row = 0; row < rowCount; row++)
@@ -181,7 +184,7 @@ public class Grid
             }
         }
         //now that everything is shifted up, we need to create garbage lines,starting from the edge moving down
-        int randomColumnIndexToLeaveHoleAt = UnityEngine.Random.Range(0,columnCount);
+        int randomColumnIndexToLeaveHoleAt = Tuner.randomInteger(0,columnCount);//UnityEngine.Random.Range(0,columnCount);
         for (int column = 0; column < columnCount; column++)
         {
             for (int row = rowCount-numberOfGarbageLinesToAdd; row < rowCount; row++)
@@ -196,13 +199,13 @@ public class Grid
             case 0:
                 return 0;
             case 1:
-                return 0;
-            case 2:
                 return 1;
+            case 2:
+                return 3;
             case 3:
-                return 2;
+                return 5;
             case 4:
-                return 4;
+                return 8;
             default:
                 return 0;
         }

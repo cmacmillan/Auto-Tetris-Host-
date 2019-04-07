@@ -7,19 +7,45 @@ using UnityEngine;
 public class AI
 {
     public float fitness=0.0f;
+    /////////////////////
     public float heightWeight;
     public float linesWeight;
     public float holesWeight;
     public float bumpinessWeight;
     public float wellWeight;
     public float incomingDangerousPiecesWeight;
-    public AI(float heightWeight,float linesWeight,float holesWeight,float bumpinessWeight,float wellWeight,float incomingDangerousPiecesWeight){
+    ///////////////////////
+    public float secondHeightWeight;
+    public float secondLinesWeight;
+    public float secondHolesWeight;
+    public float secondBumpinessWeight;
+    public float secondWellWeight;
+    public float secondIncomingDangerousPiecesWeight;
+    ///////////////////////
+    public float mergeWeight1;
+    public float mergeWeight2;
+    ///////////////////////
+    public AI(
+            float heightWeight,float linesWeight,float holesWeight,float bumpinessWeight,float wellWeight,float incomingDangerousPiecesWeight,
+            float secondHeightWeight,float secondLinesWeight,float secondHolesWeight,float secondBumpinessWeight,float secondWellWeight,float secondIncomingDangerousPiecesWeight,
+            float mergeWeight1,float mergeWeight2
+              ){
         this.heightWeight = heightWeight;
         this.linesWeight = linesWeight;
         this.holesWeight = holesWeight;
         this.bumpinessWeight = bumpinessWeight;
         this.wellWeight = wellWeight;
-        this.incomingDangerousPiecesWeight = incomingDangerousPiecesWeight;
+        this.incomingDangerousPiecesWeight = 0f;//incomingDangerousPiecesWeight;
+        //////////
+        this.secondHeightWeight = secondHeightWeight;
+        this.secondLinesWeight = secondLinesWeight;
+        this.secondHolesWeight = secondHolesWeight;
+        this.secondBumpinessWeight = secondBumpinessWeight;
+        this.secondWellWeight = secondWellWeight;
+        this.secondIncomingDangerousPiecesWeight = 0f;//incomingDangerousPiecesWeight;
+        /////////
+        this.mergeWeight1 = mergeWeight1;
+        this.mergeWeight2 = mergeWeight2;
     }
     public string getText(){
         string retr = heightWeight+"|"+
@@ -27,7 +53,17 @@ public class AI
         holesWeight+"|"+
         bumpinessWeight+"|"+
         wellWeight+"|"+
-        incomingDangerousPiecesWeight+"|";
+        incomingDangerousPiecesWeight+"|"+
+        ////
+        secondHeightWeight+"|"+
+        secondLinesWeight+"|"+
+        secondHolesWeight+"|"+
+        secondBumpinessWeight+"|"+
+        secondWellWeight+"|"+
+        secondIncomingDangerousPiecesWeight+"|"+
+        ////
+        this.mergeWeight1+"|"+
+        this.mergeWeight2;
         return retr;
     }
     public struct ScoreAndPiece{
@@ -69,7 +105,23 @@ public class AI
                     int wellDepth = _grid.depthOfDeepestWell(out wellIndex);
                     int incomingDangerousPieces = _grid.currentIncomingDangerousPieceCount();
                     //removed the negatives because lol why are they here
-                    score = this.heightWeight * cumHeight + this.linesWeight *lineCount + this.holesWeight * holeCount + this.bumpinessWeight * bumpiness + this.wellWeight*wellDepth+this.incomingDangerousPiecesWeight*incomingDangerousPieces;
+                    var node1 = this.heightWeight * cumHeight + 
+                            this.linesWeight *lineCount + 
+                            this.holesWeight * holeCount + 
+                            this.bumpinessWeight * bumpiness + 
+                            this.wellWeight*wellDepth+
+                            this.incomingDangerousPiecesWeight*incomingDangerousPieces;
+
+                    var node2 = this.secondHeightWeight * cumHeight + 
+                            this.secondLinesWeight *lineCount + 
+                            this.secondHolesWeight * holeCount + 
+                            this.secondBumpinessWeight * bumpiness + 
+                            this.secondWellWeight*wellDepth+
+                            this.secondIncomingDangerousPiecesWeight*incomingDangerousPieces;
+
+                    score = node1*this.mergeWeight1+node2*this.mergeWeight2;
+
+                    //score = this.heightWeight * cumHeight + this.linesWeight *lineCount + this.holesWeight * holeCount + this.bumpinessWeight * bumpiness + this.wellWeight*wellDepth;
                 }
                 else//Recurse
                 {

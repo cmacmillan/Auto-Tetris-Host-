@@ -1,7 +1,9 @@
 ﻿//using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+//using UnityEngine;
+//using System.Random;
 public class RandomPieceGenerator{
     public int[] bag;
     public int index;
@@ -16,7 +18,7 @@ public class RandomPieceGenerator{
         int temporaryValue;
         while (0 != currentIndex)
         {
-            randomIndex = Mathf.FloorToInt(Random.value * currentIndex);
+            randomIndex = UnityEngine.Mathf.FloorToInt(Tuner.randomVal * currentIndex);
             currentIndex -= 1;
             temporaryValue = this.bag[currentIndex];
             this.bag[currentIndex] = this.bag[randomIndex];
@@ -35,6 +37,23 @@ public class RandomPieceGenerator{
 }
 public class Tuner
 {
+    private static Random _random;
+    public static Random random
+    {
+        get
+        {
+            if (_random == null){
+                _random = new Random();
+            }
+            return _random;
+        }
+    }
+    public static float randomVal{
+        get 
+        {
+            return (float)random.NextDouble();
+        }
+    }
     public int garbageLinesToGive;
     public int howManyMovesBetweenGarbageLines;
     public int garbageAdvancedWarningTurns;
@@ -43,26 +62,62 @@ public class Tuner
         howManyMovesBetweenGarbageLines = garbageLineFrequency;
         garbageAdvancedWarningTurns = warningTurns;
     }
-    public int randomInteger(float min, float  max){
-        return Mathf.FloorToInt(Random.value * (max - min) + min);
+    public static int randomInteger(float min, float  max){
+        return UnityEngine.Mathf.FloorToInt(randomVal * (max - min) + min);
     }
     public void normalize(AI candidate){
-        var norm = Mathf.Sqrt(candidate.heightWeight * candidate.heightWeight + candidate.linesWeight * candidate.linesWeight + candidate.holesWeight * candidate.holesWeight + candidate.bumpinessWeight * candidate.bumpinessWeight+candidate.wellWeight*candidate.wellWeight+candidate.incomingDangerousPiecesWeight*candidate.incomingDangerousPiecesWeight);
+        var norm = UnityEngine.Mathf.Sqrt(
+            candidate.heightWeight * candidate.heightWeight + 
+            candidate.linesWeight * candidate.linesWeight + 
+            candidate.holesWeight * candidate.holesWeight + 
+            candidate.bumpinessWeight * candidate.bumpinessWeight+
+            candidate.wellWeight*candidate.wellWeight+
+            candidate.incomingDangerousPiecesWeight*candidate.incomingDangerousPiecesWeight+
+            /////
+            candidate.secondHeightWeight * candidate.secondHeightWeight + 
+            candidate.secondLinesWeight * candidate.secondLinesWeight + 
+            candidate.secondHolesWeight * candidate.secondHolesWeight + 
+            candidate.secondBumpinessWeight * candidate.secondBumpinessWeight+
+            candidate.secondWellWeight*candidate.secondWellWeight+
+            candidate.secondIncomingDangerousPiecesWeight*candidate.secondIncomingDangerousPiecesWeight+
+            /////
+            candidate.mergeWeight1*candidate.mergeWeight1+
+            candidate.mergeWeight2*candidate.mergeWeight2
+            );
         candidate.heightWeight /= norm;
         candidate.linesWeight /= norm;
         candidate.holesWeight /= norm;
         candidate.bumpinessWeight /= norm;
         candidate.wellWeight /= norm;
         candidate.incomingDangerousPiecesWeight/=norm;
+        ///////
+        candidate.secondHeightWeight /= norm;
+        candidate.secondLinesWeight /= norm;
+        candidate.secondHolesWeight /= norm;
+        candidate.secondBumpinessWeight /= norm;
+        candidate.secondWellWeight /= norm;
+        candidate.secondIncomingDangerousPiecesWeight/=norm;
+        ///////
+        candidate.mergeWeight1 /= norm;
+        candidate.mergeWeight2 /= norm;
     }
     public AI generateRandomCandidate(){
         var retr = new AI(
-            Random.value-.5f,
-            Random.value-.5f,
-            Random.value-.5f,
-            Random.value-.5f,
-            Random.value-.5f,
-            Random.value-.5f);
+            randomVal-.5f,
+            randomVal-.5f,
+            randomVal-.5f,
+            randomVal-.5f,
+            randomVal-.5f,
+            randomVal-.5f,
+            randomVal-.5f,
+            randomVal-.5f,
+            randomVal-.5f,
+            randomVal-.5f,
+            randomVal-.5f,
+            randomVal-.5f,
+            randomVal-.5f,
+            randomVal-.5f
+            );
         normalize(retr);
         return retr;
     }
@@ -72,7 +127,24 @@ public class Tuner
     public void computeFitnesses(List<AI> candidates, int numberOfGames, int maxNumberOfMoves){
         for(var i = 0; i < candidates.Count; i++){
             var candidate = candidates[i];
-            var ai = new AI(candidate.heightWeight, candidate.linesWeight, candidate.holesWeight, candidate.bumpinessWeight,candidate.wellWeight,candidate.incomingDangerousPiecesWeight);
+            var ai = new AI(
+                candidate.heightWeight, 
+                candidate.linesWeight, 
+                candidate.holesWeight, 
+                candidate.bumpinessWeight,
+                candidate.wellWeight,
+                candidate.incomingDangerousPiecesWeight,
+                //////////////
+                candidate.secondHeightWeight, 
+                candidate.secondLinesWeight, 
+                candidate.secondHolesWeight, 
+                candidate.secondBumpinessWeight,
+                candidate.secondWellWeight,
+                candidate.secondIncomingDangerousPiecesWeight,
+                ////
+                candidate.mergeWeight1,
+                candidate.mergeWeight2
+                );
             var totalScore = 0;
             for(var j = 0; j < numberOfGames; j++){
                 var grid = new Grid(22, 10);
@@ -99,9 +171,10 @@ public class Tuner
                     grid.addPiece(workingPiece);
 
                     //Instead of giving out points based on line count
-                    //score += grid.mappedLineCount(grid.clearLines());
+                    score += grid.mappedLineCount(grid.clearLines());
                     //We are gonna give out a point for each piece you place, and just make sure that everyone dies eventually
-                    score++;
+                    //grid.clearLines();
+                    //score++;
 
                     for(var k = 0; k < workingPieces.Count - 1; k++){
                         workingPieces[k] = workingPieces[k + 1];//shuffle each working piece over by 1
@@ -111,7 +184,7 @@ public class Tuner
                 }
                 totalScore += score;
             }
-            candidate.fitness = Mathf.Max(totalScore,.01f);
+            candidate.fitness = UnityEngine.Mathf.Max(totalScore,.01f);
         }
     }
     
@@ -143,13 +216,23 @@ public class Tuner
             candidate1.fitness * candidate1.holesWeight                     +candidate2.fitness*candidate2.holesWeight,
             candidate1.fitness * candidate1.bumpinessWeight                 +candidate2.fitness*candidate2.bumpinessWeight,
             candidate1.fitness * candidate1.wellWeight                      +candidate2.fitness*candidate2.wellWeight,
-            candidate1.fitness * candidate1.incomingDangerousPiecesWeight   +candidate2.fitness*candidate2.incomingDangerousPiecesWeight
+            candidate1.fitness * candidate1.incomingDangerousPiecesWeight   +candidate2.fitness*candidate2.incomingDangerousPiecesWeight,
+            ////////////////////////////
+            candidate1.fitness * candidate1.secondHeightWeight                    +candidate2.fitness*candidate2.secondHeightWeight,
+            candidate1.fitness * candidate1.secondLinesWeight                     +candidate2.fitness*candidate2.secondLinesWeight,
+            candidate1.fitness * candidate1.secondHolesWeight                     +candidate2.fitness*candidate2.secondHolesWeight,
+            candidate1.fitness * candidate1.secondBumpinessWeight                 +candidate2.fitness*candidate2.secondBumpinessWeight,
+            candidate1.fitness * candidate1.secondWellWeight                      +candidate2.fitness*candidate2.secondWellWeight,
+            candidate1.fitness * candidate1.secondIncomingDangerousPiecesWeight   +candidate2.fitness*candidate2.secondIncomingDangerousPiecesWeight,
+            ////////////////////////////
+            candidate1.fitness * candidate1.mergeWeight1                          +candidate2.fitness * candidate2.mergeWeight1,
+            candidate1.fitness * candidate1.mergeWeight2                          +candidate2.fitness * candidate2.mergeWeight2
         );
         normalize(candidate);
         return candidate;
     }
     public void mutate(AI candidate){
-        var quantity = Random.value * 0.4f - 0.2f; // plus/minus 0.2
+        var quantity = randomVal * 0.4f - 0.2f; // plus/minus 0.2
         switch(randomInteger(0, 6)){
             case 0:
                 candidate.heightWeight += quantity;
@@ -169,6 +252,30 @@ public class Tuner
             case 5:
                 candidate.incomingDangerousPiecesWeight += quantity;
                 break;
+            case 6:
+                candidate.secondHeightWeight += quantity;
+                break;
+            case 7:
+                candidate.secondLinesWeight += quantity;
+                break;
+            case 8:
+                candidate.secondHolesWeight += quantity;
+                break;
+            case 9:
+                candidate.secondBumpinessWeight += quantity;
+                break;
+            case 10:
+                candidate.secondWellWeight += quantity;
+                break;
+            case 11:
+                candidate.secondIncomingDangerousPiecesWeight += quantity;
+                break;
+            case 12:
+                candidate.mergeWeight1 += quantity;
+                break;
+            case 13:
+                candidate.mergeWeight2 += quantity;
+                break;
         }
     }
     public List<AI> deleteNLastReplacement(List<AI> candidates,List<AI> newCandidates){
@@ -180,45 +287,48 @@ public class Tuner
         return retr;
     }
 
-    public void tune(){
+    public void tune(AI defaultAI){
         var candidates = new List<AI>();
 
         // Initial population generation
+
+        threader.messageQueue.Enqueue("Starting...");
         for(var i = 0; i < 100; i++){
-            candidates.Add(generateRandomCandidate());
+            //candidates.Add(generateRandomCandidate());
+            candidates.Add(defaultAI);
         }
 
-        Debug.Log("Computing fitnesses of initial population...");
+        threader.messageQueue.Enqueue("Computing fitnesses of initial population...");
         computeFitnesses(candidates, 5, 200);
         sort(candidates);
         var count = 0;
         while(true){
-            System.GC.Collect();
-            if (count>8){
-                break;
+            if (count>50){
+                return;
             }
+            System.GC.Collect();
             //GC.Collect();
             var newCandidates = new List<AI>();
             for(var i = 0; i < 30; i++){ // 30% of population
                 var pair = tournamentSelectPair(candidates, 10); // 10% of population
                 //console.log('fitnesses = ' + pair[0].fitness + ',' + pair[1].fitness);
                 var candidate = crossOver(pair[0], pair[1]);
-                if(Random.value < 0.05f){// 5% chance of mutation
+                if(randomVal < 0.05f){// 5% chance of mutation
                     mutate(candidate);
                 }
                 normalize(candidate);
                 newCandidates.Add(candidate);
             }
-            Debug.Log("Computing fitnesses of new candidates. (" + count + ")");
+            threader.messageQueue.Enqueue("Computing fitnesses of new candidates. (" + count + ")");
             computeFitnesses(newCandidates, 5, 200);
             candidates=deleteNLastReplacement(candidates, newCandidates);
             float totalFitness = 0.0f;
             for(var i = 0; i < candidates.Count; i++){
                 totalFitness += candidates[i].fitness;
             }
-            Debug.Log("Average fitness = " + (totalFitness / candidates.Count));
-            Debug.Log("Highest fitness = " + candidates[0].fitness + "(" + count + ")");
-            Debug.Log("Fittest candidate = " + candidates[0].getText() + "(" + count + ")");
+            threader.messageQueue.Enqueue("Average fitness = " + (totalFitness / candidates.Count));
+            threader.messageQueue.Enqueue("Highest fitness = " + candidates[0].fitness + "(" + count + ")");
+            threader.messageQueue.Enqueue("Fittest candidate = " + candidates[0].getText() + "(" + count + ")");
             count++;
         }
     }

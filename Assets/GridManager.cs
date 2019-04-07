@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using System.IO.Ports;
+using System.Threading;
+using System.Collections.Concurrent;
 
 public class GridManager : MonoBehaviour
 {
@@ -119,10 +121,15 @@ public class GridManager : MonoBehaviour
         addNewPiece(0);
         //ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f);
         //ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f,0.0f);
-        ai = new AI(0.3854164f, 0.4151678f, 0.5825204f, 0.2002547f,.5474103f,0.0f);
+        //ai = new AI(0.3854164f, 0.4151678f, 0.5825204f, 0.2002547f,.5474103f,0.0f);
+        ai = new AI(-.7099133f,.1904075f,-.5484136f,-.328164f,.226513f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f);
 
         provider = new ImageProvider();
         drawGrid(grid1);
+        threader.messageQueue = new ConcurrentQueue<string>();
+        ThreadStart start = new ThreadStart(threader.runTuner);
+        Thread t = new Thread(start);
+        t.Start();
     }
     ImageProvider provider;
     SerialPort serialPort;
@@ -202,9 +209,13 @@ public class GridManager : MonoBehaviour
             }
             return;
         }*/
-        if (!breaker){
-            breaker = true;
-            (new Tuner(18,70,15)).tune();
+        if (true){
+            string message;
+            if (threader.messageQueue.Count>0){
+                if (threader.messageQueue.TryDequeue(out message)){
+                    Debug.Log(message);
+                }
+            }
             return;
         }
         /*if (true){
@@ -314,5 +325,16 @@ public class GridManager : MonoBehaviour
             }
         }
         return true;
+    }
+}
+public class threader
+{
+    public static ConcurrentQueue<string> messageQueue;
+    public static void runTuner()
+    {
+        var ai = new AI(0.365703f,-0.2631707f,0.2526304f,0.2846441f,-0.3554671f,0,0.3068109f,0.1611377f,0.3571807f,0.1815476f,0.03450915f,0,-0.1748801f,-0.4619432f);
+        (new Tuner(0,1,1)).tune(ai);
+        //(new Tuner(16, 10, 10)).tune();
+        //Fittest candidate = (50)
     }
 }
