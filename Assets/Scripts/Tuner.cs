@@ -279,7 +279,8 @@ public class Tuner
         }
     }
     public List<AI> deleteNLastReplacement(List<AI> candidates,List<AI> newCandidates){
-        var retr =candidates.GetRange(candidates.Count-newCandidates.Count,newCandidates.Count);///aaaaa
+        //var retr =candidates.GetRange(candidates.Count-newCandidates.Count,newCandidates.Count);///aaaaa
+        var retr =candidates.GetRange(0,candidates.Count-newCandidates.Count);///aaaaa
         for(var i = 0; i < newCandidates.Count; i++){
             retr.Add(newCandidates[i]);
         }
@@ -293,12 +294,13 @@ public class Tuner
         // Initial population generation
 
         threader.messageQueue.Enqueue("Starting...");
+        candidates.Add(defaultAI);
         for(var i = 0; i < 100; i++){
-            //candidates.Add(generateRandomCandidate());
-            candidates.Add(defaultAI);
+            candidates.Add(generateRandomCandidate());
+            //candidates.Add(defaultAI);
         }
 
-        threader.messageQueue.Enqueue("Computing fitnesses of initial population...");
+            threader.messageQueue.Enqueue("Computing fitnesses of initial population... ");
         computeFitnesses(candidates, 5, 200);
         sort(candidates);
         var count = 0;
@@ -319,7 +321,7 @@ public class Tuner
                 normalize(candidate);
                 newCandidates.Add(candidate);
             }
-            threader.messageQueue.Enqueue("Computing fitnesses of new candidates. (" + count + ")");
+            threader.messageQueue.Enqueue("Computing fitnesses of "+candidates.Count+" new candidates. (" + count + ")");
             computeFitnesses(newCandidates, 5, 200);
             candidates=deleteNLastReplacement(candidates, newCandidates);
             float totalFitness = 0.0f;
