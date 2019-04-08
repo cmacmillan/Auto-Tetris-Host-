@@ -81,8 +81,10 @@ public class Tuner
             candidate.secondWellWeight*candidate.secondWellWeight+
             candidate.secondIncomingDangerousPiecesWeight*candidate.secondIncomingDangerousPiecesWeight+
             /////
-            candidate.mergeWeight1*candidate.mergeWeight1+
-            candidate.mergeWeight2*candidate.mergeWeight2
+            candidate.mergeNode1Weight*candidate.mergeNode1Weight+
+            candidate.mergeNode2Weight*candidate.mergeNode2Weight+
+            candidate.biasMergeNode1*candidate.biasMergeNode1+
+            candidate.biasMergeNode2*candidate.biasMergeNode2
             );
         candidate.heightWeight /= norm;
         candidate.linesWeight /= norm;
@@ -98,11 +100,16 @@ public class Tuner
         candidate.secondWellWeight /= norm;
         candidate.secondIncomingDangerousPiecesWeight/=norm;
         ///////
-        candidate.mergeWeight1 /= norm;
-        candidate.mergeWeight2 /= norm;
+        candidate.mergeNode1Weight /= norm;
+        candidate.mergeNode2Weight /= norm;
+        ///////
+        candidate.biasMergeNode1 /= norm;
+        candidate.biasMergeNode2 /= norm;
     }
     public AI generateRandomCandidate(){
         var retr = new AI(
+            randomVal-.5f,
+            randomVal-.5f,
             randomVal-.5f,
             randomVal-.5f,
             randomVal-.5f,
@@ -142,8 +149,10 @@ public class Tuner
                 candidate.secondWellWeight,
                 candidate.secondIncomingDangerousPiecesWeight,
                 ////
-                candidate.mergeWeight1,
-                candidate.mergeWeight2
+                candidate.mergeNode1Weight,
+                candidate.mergeNode2Weight,
+                candidate.biasMergeNode1,
+                candidate.biasMergeNode2
                 );
             var totalScore = 0;
             for(var j = 0; j < numberOfGames; j++){
@@ -225,15 +234,17 @@ public class Tuner
             candidate1.fitness * candidate1.secondWellWeight                      +candidate2.fitness*candidate2.secondWellWeight,
             candidate1.fitness * candidate1.secondIncomingDangerousPiecesWeight   +candidate2.fitness*candidate2.secondIncomingDangerousPiecesWeight,
             ////////////////////////////
-            candidate1.fitness * candidate1.mergeWeight1                          +candidate2.fitness * candidate2.mergeWeight1,
-            candidate1.fitness * candidate1.mergeWeight2                          +candidate2.fitness * candidate2.mergeWeight2
+            candidate1.fitness * candidate1.mergeNode1Weight                          +candidate2.fitness * candidate2.mergeNode1Weight,
+            candidate1.fitness * candidate1.mergeNode2Weight                          +candidate2.fitness * candidate2.mergeNode2Weight,
+            candidate1.fitness * candidate1.biasMergeNode1                            +candidate2.fitness * candidate2.biasMergeNode1,
+            candidate1.fitness * candidate1.biasMergeNode2                            +candidate2.fitness * candidate2.biasMergeNode2
         );
         normalize(candidate);
         return candidate;
     }
     public void mutate(AI candidate){
         var quantity = randomVal * 0.4f - 0.2f; // plus/minus 0.2
-        switch(randomInteger(0, 6)){
+        switch(randomInteger(0, 16)){
             case 0:
                 candidate.heightWeight += quantity;
                 break;
@@ -271,10 +282,16 @@ public class Tuner
                 candidate.secondIncomingDangerousPiecesWeight += quantity;
                 break;
             case 12:
-                candidate.mergeWeight1 += quantity;
+                candidate.mergeNode1Weight += quantity;
                 break;
             case 13:
-                candidate.mergeWeight2 += quantity;
+                candidate.mergeNode2Weight += quantity;
+                break;
+            case 14:
+                candidate.biasMergeNode1 += quantity;
+                break;
+            case 15:
+                candidate.biasMergeNode2 += quantity;
                 break;
         }
     }
