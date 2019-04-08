@@ -2,69 +2,111 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
+public class Node{
+    public List<float> weights;
+    public Node(int numWeights,bool randomizeWeights=false){
+        weights = new List<float>(numWeights);
+        if (randomizeWeights){
+            for(int i=0;i<weights.Count;i++){
+                weights[i] = Tuner.randomVal-.5f;
+            }
+        }
+    }
+    public Node copy(){
+        var retr = new Node(weights.Count);
+        for (int i=0;i<weights.Count;i++){
+            retr.weights[i]=weights[i];
+        }
+        return retr;
+    }
+    public float evaluate(List<float> args){
+        if (weights.Count!=args.Count){
+            throw new Exception("weights must match args");
+        }
+        float value =0;
+        for (int i=0;i<args.Count;i++){
+            value += args[i]*weights[i];
+        }
+        return value;
+    }
+}
 public class AI
 {
     public float fitness=0.0f;
     /////////////////////
-    public float heightWeight;
-    public float linesWeight;
-    public float holesWeight;
-    public float bumpinessWeight;
-    public float wellWeight;
-    public float incomingDangerousPiecesWeight;
+    public int hiddenLayerNodeWeightCount{get{return hiddenLayer[0].weights.Count;}}
+    public int allWeightCount {get {return hiddenLayer.Count*hiddenLayerNodeWeightCount+outputNode.weights.Count;}}
+    //this code assumes that all hidden nodes have the same count
+    public float getWeightAtIndex(int index){
+        if (index>=allWeightCount){
+            throw new Exception("index out of range");
+        }
+        int endOfHiddenLayer = hiddenLayer.Count*hiddenLayerNodeWeightCount;
+        if (index<endOfHiddenLayer){
+            int offset = index%hiddenLayerNodeWeightCount;
+            return hiddenLayer[index/hiddenLayer.Count].weights[offset];
+        }
+        return outputNode.weights[index-endOfHiddenLayer];
+    }
+    public void setWeightAtIndex(int index, float value){
+        if (index>=allWeightCount){
+            throw new Exception("index out of range");
+        }
+        int endOfHiddenLayer = hiddenLayer.Count*hiddenLayerNodeWeightCount;
+        if (index<endOfHiddenLayer){
+            int offset = index%hiddenLayerNodeWeightCount;
+            hiddenLayer[index/hiddenLayer.Count].weights[offset]=value;
+        }
+        outputNode.weights[index-endOfHiddenLayer]=value;
+    }
+
+    public List<Node> hiddenLayer;//only 1 hidden layer
+    public Node outputNode;
     ///////////////////////
-    public float secondHeightWeight;
-    public float secondLinesWeight;
-    public float secondHolesWeight;
-    public float secondBumpinessWeight;
-    public float secondWellWeight;
-    public float secondIncomingDangerousPiecesWeight;
-    ///////////////////////
-    public float mergeNode1Weight;
-    public float mergeNode2Weight;
-    ///////////////////////
-    public AI(
-            float heightWeight,float linesWeight,float holesWeight,float bumpinessWeight,float wellWeight,float incomingDangerousPiecesWeight,
-            float secondHeightWeight,float secondLinesWeight,float secondHolesWeight,float secondBumpinessWeight,float secondWellWeight,float secondIncomingDangerousPiecesWeight,
-            float mergeWeight1,float mergeWeight2
-              ){
-        this.heightWeight = heightWeight;
-        this.linesWeight = linesWeight;
-        this.holesWeight = holesWeight;
-        this.bumpinessWeight = bumpinessWeight;
-        this.wellWeight = wellWeight;
-        this.incomingDangerousPiecesWeight = 0f;//incomingDangerousPiecesWeight;
-        //////////
-        this.secondHeightWeight = secondHeightWeight;
-        this.secondLinesWeight = secondLinesWeight;
-        this.secondHolesWeight = secondHolesWeight;
-        this.secondBumpinessWeight = secondBumpinessWeight;
-        this.secondWellWeight = secondWellWeight;
-        this.secondIncomingDangerousPiecesWeight = 0f;//incomingDangerousPiecesWeight;
-        /////////
-        this.mergeNode1Weight = mergeWeight1;
-        this.mergeNode2Weight = mergeWeight2;
+    public AI(int numHiddenNodes,bool isRandom=false)
+    {
+        hiddenLayer = new List<Node>();
+        for (int i=0;i<numHiddenNodes;i++){
+            var hiddenNode = new Node(6,isRandom);
+            hiddenLayer.Add(hiddenNode);
+        }
+        outputNode = new Node(numHiddenNodes,isRandom);
+    }
+    public AI(AI oldAI){
+        hiddenLayer = new List<Node>(oldAI.hiddenLayer.Count);
+        for (int i=0;i<oldAI.hiddenLayer.Count;i++){
+            hiddenLayer[i] = oldAI.hiddenLayer[i].copy();
+        }
+        outputNode = oldAI.outputNode.copy();
     }
     public string getText(){
-        string retr = heightWeight+"|"+
-        linesWeight+"|"+
-        holesWeight+"|"+
-        bumpinessWeight+"|"+
-        wellWeight+"|"+
-        incomingDangerousPiecesWeight+"|"+
-        ////
-        secondHeightWeight+"|"+
-        secondLinesWeight+"|"+
-        secondHolesWeight+"|"+
-        secondBumpinessWeight+"|"+
-        secondWellWeight+"|"+
-        secondIncomingDangerousPiecesWeight+"|"+
-        ////
-        this.mergeNode1Weight+"|"+
-        this.mergeNode2Weight+"|";
-        return retr;
+        StringBuilder builder = new StringBuilder();
+        int c;
+        foreach (var i in hiddenLayer){
+            builder.Append("|||Hidden Node ");
+            builder.Append(i);
+            c = 0;
+            foreach (var j in i.weights){
+                builder.Append(" Weight ");
+                builder.Append(c);
+                builder.Append(" is ");
+                builder.Append(j);
+                c++;
+            }
+        }
+        builder.Append("|||Output node ");
+        c=0;
+        foreach (var i in outputNode.weights){
+                builder.Append(" Weight ");
+                builder.Append(c);
+                builder.Append(" is ");
+                builder.Append(i);
+                c++;
+        }
+        return builder.ToString();
     }
     public struct ScoreAndPiece{
         public Piece piece;
@@ -72,6 +114,14 @@ public class AI
         public bool shouldSwap;
     }
 
+    private static List<float> _featureList;
+    public static List<float> featureList {get {
+            if (_featureList==null){
+                _featureList = new List<float>(6);//we have 6 feature
+            }
+            return _featureList;
+        }
+    }
     public ScoreAndPiece _subBest(Grid grid, List<Piece> workingPieces,int workingPieceIndex,bool shouldGetExtraMove=false){
         Piece best = null;
         float? bestScore = null;
@@ -97,34 +147,17 @@ public class AI
                 float? score = null;
                 if (workingPieceIndex == (workingPieces.Count - (shouldGetExtraMove?1:2)))//rate that board state
                 {
-                    int cumHeight = _grid.cumulativeHeight();
-                    int lineCount = _grid.lineCount();
-                    int holeCount = _grid.holeCount();
-                    int bumpiness = _grid.bumpiness();
+                    featureList[0] = _grid.cumulativeHeight();
+                    featureList[1] = _grid.lineCount();
+                    featureList[2] = _grid.holeCount();
+                    featureList[3] = _grid.bumpiness();
                     int wellIndex;
-                    int wellDepth = _grid.depthOfDeepestWell(out wellIndex);
-                    int incomingDangerousPieces = _grid.currentIncomingDangerousPieceCount();
-                    //removed the negatives because lol why are they here
-                    var node1 = this.heightWeight * cumHeight + 
-                            this.linesWeight *lineCount + 
-                            this.holesWeight * holeCount + 
-                            this.bumpinessWeight * bumpiness + 
-                            this.wellWeight*wellDepth+
-                            this.incomingDangerousPiecesWeight*incomingDangerousPieces
-                            ;
-
-                    var node2 = this.secondHeightWeight * cumHeight + 
-                            this.secondLinesWeight *lineCount + 
-                            this.secondHolesWeight * holeCount + 
-                            this.secondBumpinessWeight * bumpiness + 
-                            this.secondWellWeight*wellDepth+
-                            this.secondIncomingDangerousPiecesWeight*incomingDangerousPieces;
-                            ;
-
-
-                    score = node1*this.mergeNode1Weight+node2*this.mergeNode2Weight;
-
-                    //score = this.heightWeight * cumHeight + this.linesWeight *lineCount + this.holesWeight * holeCount + this.bumpinessWeight * bumpiness + this.wellWeight*wellDepth;
+                    featureList[4] = _grid.depthOfDeepestWell(out wellIndex);
+                    featureList[5] = _grid.currentIncomingDangerousPieceCount();
+                    score = 0;
+                    for (int i=0;i<hiddenLayer.Count;i++){
+                        score += outputNode.weights[i]*hiddenLayer[i].evaluate(featureList);
+                    }
                 }
                 else//Recurse
                 {

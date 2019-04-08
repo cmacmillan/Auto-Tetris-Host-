@@ -66,58 +66,19 @@ public class Tuner
         return UnityEngine.Mathf.FloorToInt(randomVal * (max - min) + min);
     }
     public void normalize(AI candidate){
-        var norm = UnityEngine.Mathf.Sqrt(
-            candidate.heightWeight * candidate.heightWeight + 
-            candidate.linesWeight * candidate.linesWeight + 
-            candidate.holesWeight * candidate.holesWeight + 
-            candidate.bumpinessWeight * candidate.bumpinessWeight+
-            candidate.wellWeight*candidate.wellWeight+
-            candidate.incomingDangerousPiecesWeight*candidate.incomingDangerousPiecesWeight+
-            /////
-            candidate.secondHeightWeight * candidate.secondHeightWeight + 
-            candidate.secondLinesWeight * candidate.secondLinesWeight + 
-            candidate.secondHolesWeight * candidate.secondHolesWeight + 
-            candidate.secondBumpinessWeight * candidate.secondBumpinessWeight+
-            candidate.secondWellWeight*candidate.secondWellWeight+
-            candidate.secondIncomingDangerousPiecesWeight*candidate.secondIncomingDangerousPiecesWeight+
-            /////
-            candidate.mergeNode1Weight*candidate.mergeNode1Weight+
-            candidate.mergeNode2Weight*candidate.mergeNode2Weight
-            );
-        candidate.heightWeight /= norm;
-        candidate.linesWeight /= norm;
-        candidate.holesWeight /= norm;
-        candidate.bumpinessWeight /= norm;
-        candidate.wellWeight /= norm;
-        candidate.incomingDangerousPiecesWeight/=norm;
-        ///////
-        candidate.secondHeightWeight /= norm;
-        candidate.secondLinesWeight /= norm;
-        candidate.secondHolesWeight /= norm;
-        candidate.secondBumpinessWeight /= norm;
-        candidate.secondWellWeight /= norm;
-        candidate.secondIncomingDangerousPiecesWeight/=norm;
-        ///////
-        candidate.mergeNode1Weight /= norm;
-        candidate.mergeNode2Weight /= norm;
+        float norm = 0.0f;
+        for(int i=0;i<candidate.allWeightCount;i++){
+            float w =candidate.getWeightAtIndex(i);
+            norm += w*w;
+        }
+        norm = UnityEngine.Mathf.Sqrt(norm);
+        for(int i=0;i<candidate.allWeightCount;i++){
+            candidate.setWeightAtIndex(i,candidate.getWeightAtIndex(i)/norm);
+        }
     }
-    public AI generateRandomCandidate(){
-        var retr = new AI(
-            randomVal-.5f,
-            randomVal-.5f,
-            randomVal-.5f,
-            randomVal-.5f,
-            randomVal-.5f,
-            randomVal-.5f,
-            randomVal-.5f,
-            randomVal-.5f,
-            randomVal-.5f,
-            randomVal-.5f,
-            randomVal-.5f,
-            randomVal-.5f,
-            randomVal-.5f,
-            randomVal-.5f
-            );
+    public AI generateRandomCandidate(int numHiddenNodes){
+        //randomVal-.5f,
+        var retr = new AI(numHiddenNodes,true);
         normalize(retr);
         return retr;
     }
@@ -127,24 +88,8 @@ public class Tuner
     public void computeFitnesses(List<AI> candidates, int numberOfGames, int maxNumberOfMoves){
         for(var i = 0; i < candidates.Count; i++){
             var candidate = candidates[i];
-            var ai = new AI(
-                candidate.heightWeight, 
-                candidate.linesWeight, 
-                candidate.holesWeight, 
-                candidate.bumpinessWeight,
-                candidate.wellWeight,
-                candidate.incomingDangerousPiecesWeight,
-                //////////////
-                candidate.secondHeightWeight, 
-                candidate.secondLinesWeight, 
-                candidate.secondHolesWeight, 
-                candidate.secondBumpinessWeight,
-                candidate.secondWellWeight,
-                candidate.secondIncomingDangerousPiecesWeight,
-                ////
-                candidate.mergeNode1Weight,
-                candidate.mergeNode2Weight
-                );
+            var ai = new AI(candidate);
+
             var totalScore = 0;
             for(var j = 0; j < numberOfGames; j++){
                 var grid = new Grid(22, 10);
@@ -209,88 +154,22 @@ public class Tuner
         }
         return new AI[2]{candidates[fittestCandidateIndex1.Value], candidates[fittestCanddiateIndex2.Value]};
     }
-    public AI crossOver(AI candidate1,AI candidate2){
-        var candidate = new AI(
-            (randomVal<.5?candidate1.heightWeight                       :candidate2.heightWeight),
-            (randomVal<.5?candidate1.linesWeight                        :candidate2.linesWeight),
-            (randomVal<.5?candidate1.holesWeight                        :candidate2.holesWeight),
-            (randomVal<.5?candidate1.bumpinessWeight                    :candidate2.bumpinessWeight),
-            (randomVal<.5?candidate1.wellWeight                         :candidate2.wellWeight),
-            (randomVal<.5?candidate1.incomingDangerousPiecesWeight      :candidate2.incomingDangerousPiecesWeight),
-            (randomVal<.5?candidate1.secondHeightWeight                 :candidate2.secondHeightWeight),
-            (randomVal<.5?candidate1.secondLinesWeight                  :candidate2.secondLinesWeight),
-            (randomVal<.5?candidate1.secondHolesWeight                  :candidate2.secondHolesWeight),
-            (randomVal<.5?candidate1.secondBumpinessWeight              :candidate2.secondBumpinessWeight),
-            (randomVal<.5?candidate1.secondWellWeight                   :candidate2.secondWellWeight),
-            (randomVal<.5?candidate1.secondIncomingDangerousPiecesWeight:candidate2.secondIncomingDangerousPiecesWeight),
-            (randomVal<.5?candidate1.mergeNode1Weight                   :candidate2.mergeNode1Weight),
-            (randomVal<.5?candidate1.mergeNode2Weight                   :candidate2.mergeNode2Weight)
-
-            /*candidate1.fitness * candidate1.linesWeight                     +candidate2.fitness*candidate2.linesWeight,
-            candidate1.fitness * candidate1.holesWeight                     +candidate2.fitness*candidate2.holesWeight,
-            candidate1.fitness * candidate1.bumpinessWeight                 +candidate2.fitness*candidate2.bumpinessWeight,
-            candidate1.fitness * candidate1.wellWeight                      +candidate2.fitness*candidate2.wellWeight,
-            candidate1.fitness * candidate1.incomingDangerousPiecesWeight   +candidate2.fitness*candidate2.incomingDangerousPiecesWeight,
-            ////////////////////////////
-            candidate1.fitness * candidate1.secondHeightWeight                    +candidate2.fitness*candidate2.secondHeightWeight,
-            candidate1.fitness * candidate1.secondLinesWeight                     +candidate2.fitness*candidate2.secondLinesWeight,
-            candidate1.fitness * candidate1.secondHolesWeight                     +candidate2.fitness*candidate2.secondHolesWeight,
-            candidate1.fitness * candidate1.secondBumpinessWeight                 +candidate2.fitness*candidate2.secondBumpinessWeight,
-            candidate1.fitness * candidate1.secondWellWeight                      +candidate2.fitness*candidate2.secondWellWeight,
-            candidate1.fitness * candidate1.secondIncomingDangerousPiecesWeight   +candidate2.fitness*candidate2.secondIncomingDangerousPiecesWeight,
-            ////////////////////////////
-            candidate1.fitness * candidate1.mergeNode1Weight                          +candidate2.fitness * candidate2.mergeNode1Weight,
-            candidate1.fitness * candidate1.mergeNode2Weight                          +candidate2.fitness * candidate2.mergeNode2Weight*/
-        );
+    public AI crossOver(AI candidate1, AI candidate2)
+    {
+        var candidate = new AI(candidate1);//copy candidate 1
+        for (int i = 0; i < candidate.allWeightCount; i++)
+        {
+            if (randomVal < .5){
+                candidate.setWeightAtIndex(i,candidate2.getWeightAtIndex(i));
+            }
+        }
         normalize(candidate);
         return candidate;
     }
     public void mutate(AI candidate){
         var quantity = randomVal * 0.4f - 0.2f; // plus/minus 0.2
-        switch(randomInteger(0, 14)){
-            case 0:
-                candidate.heightWeight += quantity;
-                break;
-            case 1:
-                candidate.linesWeight += quantity;
-                break;
-            case 2:
-                candidate.holesWeight += quantity;
-                break;
-            case 3:
-                candidate.bumpinessWeight += quantity;
-                break;
-            case 4:
-                candidate.wellWeight += quantity;
-                break;
-            case 5:
-                candidate.incomingDangerousPiecesWeight += quantity;
-                break;
-            case 6:
-                candidate.secondHeightWeight += quantity;
-                break;
-            case 7:
-                candidate.secondLinesWeight += quantity;
-                break;
-            case 8:
-                candidate.secondHolesWeight += quantity;
-                break;
-            case 9:
-                candidate.secondBumpinessWeight += quantity;
-                break;
-            case 10:
-                candidate.secondWellWeight += quantity;
-                break;
-            case 11:
-                candidate.secondIncomingDangerousPiecesWeight += quantity;
-                break;
-            case 12:
-                candidate.mergeNode1Weight += quantity;
-                break;
-            case 13:
-                candidate.mergeNode2Weight += quantity;
-                break;
-        }
+        int randIndex = randomInteger(0,candidate.allWeightCount);
+        candidate.setWeightAtIndex(randIndex,candidate.getWeightAtIndex(randIndex)+quantity);
     }
     public List<AI> deleteNLastReplacement(List<AI> candidates,List<AI> newCandidates){
         //var retr =candidates.GetRange(candidates.Count-newCandidates.Count,newCandidates.Count);
@@ -302,7 +181,7 @@ public class Tuner
         return retr;
     }
 
-    public void tune(AI defaultAI){
+    public void tune(){
         var candidates = new List<AI>();
 
         // Initial population generation
@@ -310,7 +189,7 @@ public class Tuner
         threader.messageQueue.Enqueue("Starting...");
         //candidates.Add(defaultAI);
         for(var i = 0; i < 100; i++){
-            candidates.Add(generateRandomCandidate());
+            candidates.Add(generateRandomCandidate(4));
             //candidates.Add(defaultAI);
         }
 
