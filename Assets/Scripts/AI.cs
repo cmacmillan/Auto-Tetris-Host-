@@ -25,13 +25,10 @@ public class AI
     public float mergeNode1Weight;
     public float mergeNode2Weight;
     ///////////////////////
-    public float biasMergeNode1;
-    public float biasMergeNode2;
-    ///////////////////////
     public AI(
             float heightWeight,float linesWeight,float holesWeight,float bumpinessWeight,float wellWeight,float incomingDangerousPiecesWeight,
             float secondHeightWeight,float secondLinesWeight,float secondHolesWeight,float secondBumpinessWeight,float secondWellWeight,float secondIncomingDangerousPiecesWeight,
-            float mergeWeight1,float mergeWeight2,float biasMergeNode1,float biasMergeNode2
+            float mergeWeight1,float mergeWeight2
               ){
         this.heightWeight = heightWeight;
         this.linesWeight = linesWeight;
@@ -49,9 +46,6 @@ public class AI
         /////////
         this.mergeNode1Weight = mergeWeight1;
         this.mergeNode2Weight = mergeWeight2;
-        /////////
-        this.biasMergeNode1 = biasMergeNode1;
-        this.biasMergeNode2 = biasMergeNode2;
     }
     public string getText(){
         string retr = heightWeight+"|"+
@@ -69,9 +63,7 @@ public class AI
         secondIncomingDangerousPiecesWeight+"|"+
         ////
         this.mergeNode1Weight+"|"+
-        this.mergeNode2Weight+"|"+
-        this.biasMergeNode1+"|"+
-        this.biasMergeNode2+"|";
+        this.mergeNode2Weight+"|";
         return retr;
     }
     public struct ScoreAndPiece{
@@ -112,15 +104,13 @@ public class AI
                     int wellIndex;
                     int wellDepth = _grid.depthOfDeepestWell(out wellIndex);
                     int incomingDangerousPieces = _grid.currentIncomingDangerousPieceCount();
-                    int bias=1;
                     //removed the negatives because lol why are they here
                     var node1 = this.heightWeight * cumHeight + 
                             this.linesWeight *lineCount + 
                             this.holesWeight * holeCount + 
                             this.bumpinessWeight * bumpiness + 
                             this.wellWeight*wellDepth+
-                            this.incomingDangerousPiecesWeight*incomingDangerousPieces+
-                            this.biasMergeNode1*bias
+                            this.incomingDangerousPiecesWeight*incomingDangerousPieces
                             ;
 
                     var node2 = this.secondHeightWeight * cumHeight + 
@@ -128,8 +118,7 @@ public class AI
                             this.secondHolesWeight * holeCount + 
                             this.secondBumpinessWeight * bumpiness + 
                             this.secondWellWeight*wellDepth+
-                            this.secondIncomingDangerousPiecesWeight*incomingDangerousPieces+
-                            this.biasMergeNode2*bias
+                            this.secondIncomingDangerousPiecesWeight*incomingDangerousPieces;
                             ;
 
 

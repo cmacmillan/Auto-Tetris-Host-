@@ -82,9 +82,7 @@ public class Tuner
             candidate.secondIncomingDangerousPiecesWeight*candidate.secondIncomingDangerousPiecesWeight+
             /////
             candidate.mergeNode1Weight*candidate.mergeNode1Weight+
-            candidate.mergeNode2Weight*candidate.mergeNode2Weight+
-            candidate.biasMergeNode1*candidate.biasMergeNode1+
-            candidate.biasMergeNode2*candidate.biasMergeNode2
+            candidate.mergeNode2Weight*candidate.mergeNode2Weight
             );
         candidate.heightWeight /= norm;
         candidate.linesWeight /= norm;
@@ -102,14 +100,9 @@ public class Tuner
         ///////
         candidate.mergeNode1Weight /= norm;
         candidate.mergeNode2Weight /= norm;
-        ///////
-        candidate.biasMergeNode1 /= norm;
-        candidate.biasMergeNode2 /= norm;
     }
     public AI generateRandomCandidate(){
         var retr = new AI(
-            randomVal-.5f,
-            randomVal-.5f,
             randomVal-.5f,
             randomVal-.5f,
             randomVal-.5f,
@@ -150,9 +143,7 @@ public class Tuner
                 candidate.secondIncomingDangerousPiecesWeight,
                 ////
                 candidate.mergeNode1Weight,
-                candidate.mergeNode2Weight,
-                candidate.biasMergeNode1,
-                candidate.biasMergeNode2
+                candidate.mergeNode2Weight
                 );
             var totalScore = 0;
             for(var j = 0; j < numberOfGames; j++){
@@ -220,8 +211,22 @@ public class Tuner
     }
     public AI crossOver(AI candidate1,AI candidate2){
         var candidate = new AI(
-            candidate1.fitness * candidate1.heightWeight                    +candidate2.fitness*candidate2.heightWeight,
-            candidate1.fitness * candidate1.linesWeight                     +candidate2.fitness*candidate2.linesWeight,
+            (randomVal<.5?candidate1.heightWeight                       :candidate2.heightWeight),
+            (randomVal<.5?candidate1.linesWeight                        :candidate2.linesWeight),
+            (randomVal<.5?candidate1.holesWeight                        :candidate2.holesWeight),
+            (randomVal<.5?candidate1.bumpinessWeight                    :candidate2.bumpinessWeight),
+            (randomVal<.5?candidate1.wellWeight                         :candidate2.wellWeight),
+            (randomVal<.5?candidate1.incomingDangerousPiecesWeight      :candidate2.incomingDangerousPiecesWeight),
+            (randomVal<.5?candidate1.secondHeightWeight                 :candidate2.secondHeightWeight),
+            (randomVal<.5?candidate1.secondLinesWeight                  :candidate2.secondLinesWeight),
+            (randomVal<.5?candidate1.secondHolesWeight                  :candidate2.secondHolesWeight),
+            (randomVal<.5?candidate1.secondBumpinessWeight              :candidate2.secondBumpinessWeight),
+            (randomVal<.5?candidate1.secondWellWeight                   :candidate2.secondWellWeight),
+            (randomVal<.5?candidate1.secondIncomingDangerousPiecesWeight:candidate2.secondIncomingDangerousPiecesWeight),
+            (randomVal<.5?candidate1.mergeNode1Weight                   :candidate2.mergeNode1Weight),
+            (randomVal<.5?candidate1.mergeNode2Weight                   :candidate2.mergeNode2Weight)
+
+            /*candidate1.fitness * candidate1.linesWeight                     +candidate2.fitness*candidate2.linesWeight,
             candidate1.fitness * candidate1.holesWeight                     +candidate2.fitness*candidate2.holesWeight,
             candidate1.fitness * candidate1.bumpinessWeight                 +candidate2.fitness*candidate2.bumpinessWeight,
             candidate1.fitness * candidate1.wellWeight                      +candidate2.fitness*candidate2.wellWeight,
@@ -235,16 +240,14 @@ public class Tuner
             candidate1.fitness * candidate1.secondIncomingDangerousPiecesWeight   +candidate2.fitness*candidate2.secondIncomingDangerousPiecesWeight,
             ////////////////////////////
             candidate1.fitness * candidate1.mergeNode1Weight                          +candidate2.fitness * candidate2.mergeNode1Weight,
-            candidate1.fitness * candidate1.mergeNode2Weight                          +candidate2.fitness * candidate2.mergeNode2Weight,
-            candidate1.fitness * candidate1.biasMergeNode1                            +candidate2.fitness * candidate2.biasMergeNode1,
-            candidate1.fitness * candidate1.biasMergeNode2                            +candidate2.fitness * candidate2.biasMergeNode2
+            candidate1.fitness * candidate1.mergeNode2Weight                          +candidate2.fitness * candidate2.mergeNode2Weight*/
         );
         normalize(candidate);
         return candidate;
     }
     public void mutate(AI candidate){
         var quantity = randomVal * 0.4f - 0.2f; // plus/minus 0.2
-        switch(randomInteger(0, 16)){
+        switch(randomInteger(0, 14)){
             case 0:
                 candidate.heightWeight += quantity;
                 break;
@@ -287,17 +290,11 @@ public class Tuner
             case 13:
                 candidate.mergeNode2Weight += quantity;
                 break;
-            case 14:
-                candidate.biasMergeNode1 += quantity;
-                break;
-            case 15:
-                candidate.biasMergeNode2 += quantity;
-                break;
         }
     }
     public List<AI> deleteNLastReplacement(List<AI> candidates,List<AI> newCandidates){
-        //var retr =candidates.GetRange(candidates.Count-newCandidates.Count,newCandidates.Count);///aaaaa
-        var retr =candidates.GetRange(0,candidates.Count-newCandidates.Count);///aaaaa
+        //var retr =candidates.GetRange(candidates.Count-newCandidates.Count,newCandidates.Count);
+        var retr =candidates.GetRange(0,candidates.Count-newCandidates.Count);
         for(var i = 0; i < newCandidates.Count; i++){
             retr.Add(newCandidates[i]);
         }
@@ -311,7 +308,7 @@ public class Tuner
         // Initial population generation
 
         threader.messageQueue.Enqueue("Starting...");
-        candidates.Add(defaultAI);
+        //candidates.Add(defaultAI);
         for(var i = 0; i < 100; i++){
             candidates.Add(generateRandomCandidate());
             //candidates.Add(defaultAI);
@@ -329,11 +326,14 @@ public class Tuner
                 var pair = tournamentSelectPair(candidates, 10); // 10% of population
                 //console.log('fitnesses = ' + pair[0].fitness + ',' + pair[1].fitness);
                 var candidate = crossOver(pair[0], pair[1]);
-                if(randomVal < 0.05f){// 5% chance of mutation
-                    mutate(candidate);
-                }
                 normalize(candidate);
                 newCandidates.Add(candidate);
+            }
+            for(int i=0;i<newCandidates.Count;i++){
+                if(randomVal < 0.05f){// 5% chance of mutation
+                    mutate(newCandidates[i]);
+                    normalize(newCandidates[i]);
+                }
             }
             threader.messageQueue.Enqueue("Computing fitnesses of "+candidates.Count+" new candidates. (" + count + ")");
             computeFitnesses(newCandidates, 5, 200);
