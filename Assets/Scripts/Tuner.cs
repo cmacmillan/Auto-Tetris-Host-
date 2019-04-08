@@ -322,9 +322,6 @@ public class Tuner
         sort(candidates);
         var count = 0;
         while(true){
-            if (count>50){
-                return;
-            }
             System.GC.Collect();
             //GC.Collect();
             var newCandidates = new List<AI>();
