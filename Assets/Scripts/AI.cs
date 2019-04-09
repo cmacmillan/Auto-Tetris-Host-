@@ -6,28 +6,28 @@ using System.Text;
 using UnityEngine;
 
 public class Node{
-    public List<float> weights;
+    public float[] weights;
     public Node(int numWeights,bool randomizeWeights=false){
-        weights = new List<float>(numWeights);
+        weights = new float[numWeights];
         if (randomizeWeights){
-            for(int i=0;i<weights.Count;i++){
+            for(int i=0;i<weights.Length;i++){
                 weights[i] = Tuner.randomVal-.5f;
             }
         }
     }
     public Node copy(){
-        var retr = new Node(weights.Count);
-        for (int i=0;i<weights.Count;i++){
+        var retr = new Node(weights.Length);
+        for (int i=0;i<weights.Length;i++){
             retr.weights[i]=weights[i];
         }
         return retr;
     }
-    public float evaluate(List<float> args){
-        if (weights.Count!=args.Count){
+    public float evaluate(float[] args){
+        if (weights.Length!=args.Length){
             throw new Exception("weights must match args");
         }
         float value =0;
-        for (int i=0;i<args.Count;i++){
+        for (int i=0;i<args.Length;i++){
             value += args[i]*weights[i];
         }
         return value;
@@ -37,17 +37,17 @@ public class AI
 {
     public float fitness=0.0f;
     /////////////////////
-    public int hiddenLayerNodeWeightCount{get{return hiddenLayer[0].weights.Count;}}
-    public int allWeightCount {get {return hiddenLayer.Count*hiddenLayerNodeWeightCount+outputNode.weights.Count;}}
+    public int hiddenLayerNodeWeightCount{get{return hiddenLayer[0].weights.Length;}}
+    public int allWeightCount {get {return hiddenLayer.Length*hiddenLayerNodeWeightCount+outputNode.weights.Length;}}
     //this code assumes that all hidden nodes have the same count
     public float getWeightAtIndex(int index){
         if (index>=allWeightCount){
             throw new Exception("index out of range");
         }
-        int endOfHiddenLayer = hiddenLayer.Count*hiddenLayerNodeWeightCount;
+        int endOfHiddenLayer = hiddenLayer.Length*hiddenLayerNodeWeightCount;
         if (index<endOfHiddenLayer){
             int offset = index%hiddenLayerNodeWeightCount;
-            return hiddenLayer[index/hiddenLayer.Count].weights[offset];
+            return hiddenLayer[index/hiddenLayerNodeWeightCount].weights[offset];
         }
         return outputNode.weights[index-endOfHiddenLayer];
     }
@@ -55,29 +55,31 @@ public class AI
         if (index>=allWeightCount){
             throw new Exception("index out of range");
         }
-        int endOfHiddenLayer = hiddenLayer.Count*hiddenLayerNodeWeightCount;
+        int endOfHiddenLayer = hiddenLayer.Length*hiddenLayerNodeWeightCount;
         if (index<endOfHiddenLayer){
             int offset = index%hiddenLayerNodeWeightCount;
-            hiddenLayer[index/hiddenLayer.Count].weights[offset]=value;
+            hiddenLayer[index/hiddenLayerNodeWeightCount].weights[offset]=value;
+            return;
         }
         outputNode.weights[index-endOfHiddenLayer]=value;
+        return;
     }
 
-    public List<Node> hiddenLayer;//only 1 hidden layer
+    public Node[] hiddenLayer;//only 1 hidden layer
     public Node outputNode;
     ///////////////////////
     public AI(int numHiddenNodes,bool isRandom=false)
     {
-        hiddenLayer = new List<Node>();
+        hiddenLayer = new Node[numHiddenNodes];
         for (int i=0;i<numHiddenNodes;i++){
-            var hiddenNode = new Node(6,isRandom);
-            hiddenLayer.Add(hiddenNode);
+            var hiddenNode = new Node(7,isRandom);
+            hiddenLayer[i]=hiddenNode;
         }
         outputNode = new Node(numHiddenNodes,isRandom);
     }
     public AI(AI oldAI){
-        hiddenLayer = new List<Node>(oldAI.hiddenLayer.Count);
-        for (int i=0;i<oldAI.hiddenLayer.Count;i++){
+        hiddenLayer = new Node[oldAI.hiddenLayer.Length];
+        for (int i=0;i<oldAI.hiddenLayer.Length;i++){
             hiddenLayer[i] = oldAI.hiddenLayer[i].copy();
         }
         outputNode = oldAI.outputNode.copy();
@@ -114,13 +116,16 @@ public class AI
         public bool shouldSwap;
     }
 
-    private static List<float> _featureList;
-    public static List<float> featureList {get {
+    private static float[] _featureList;
+    public static float[] featureList {get {
             if (_featureList==null){
-                _featureList = new List<float>(6);//we have 6 feature
+                _featureList = new float[7];//we have 6 feature + a bias
             }
             return _featureList;
         }
+    }
+    public static float sigmoid(float x){
+        return 1/(1+Mathf.Exp(-x));
     }
     public ScoreAndPiece _subBest(Grid grid, List<Piece> workingPieces,int workingPieceIndex,bool shouldGetExtraMove=false){
         Piece best = null;
@@ -153,10 +158,11 @@ public class AI
                     featureList[3] = _grid.bumpiness();
                     int wellIndex;
                     featureList[4] = _grid.depthOfDeepestWell(out wellIndex);
-                    featureList[5] = _grid.currentIncomingDangerousPieceCount();
+                    featureList[5] = 0;//_grid.currentIncomingDangerousPieceCount();
+                    featureList[6] = 1;
                     score = 0;
-                    for (int i=0;i<hiddenLayer.Count;i++){
-                        score += outputNode.weights[i]*hiddenLayer[i].evaluate(featureList);
+                    for (int i=0;i<hiddenLayer.Length;i++){
+                        score += outputNode.weights[i]*sigmoid(hiddenLayer[i].evaluate(featureList));
                     }
                 }
                 else//Recurse
