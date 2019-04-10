@@ -7,6 +7,12 @@ using UnityEngine;
 
 public class Node{
     public float[] weights;
+    public Node (float[] weights){
+        this.weights = new float[weights.Length];
+        for(int i=0;i<weights.Length;i++){
+            this.weights[i] = weights[i];
+        }
+    }
     public Node(int numWeights,bool randomizeWeights=false){
         weights = new float[numWeights];
         if (randomizeWeights){
@@ -68,6 +74,13 @@ public class AI
     public Node[] hiddenLayer;//only 1 hidden layer
     public Node outputNode;
     ///////////////////////
+    public AI(float[][] hiddenLayer, float[] outputLayer){
+        this.hiddenLayer = new Node[hiddenLayer.Length];
+        for (int i=0;i<this.hiddenLayer.Length;i++){
+            this.hiddenLayer[i] = new Node(hiddenLayer[i]);
+        }
+        outputNode = new Node(outputLayer);
+    }
     public AI(int numHiddenNodes,bool isRandom=false)
     {
         hiddenLayer = new Node[numHiddenNodes];
