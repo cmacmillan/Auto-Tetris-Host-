@@ -41,6 +41,7 @@ public class Node{
 }
 public class AI
 {
+    const int FeatureCount=10;//This includes the bias
     public float fitness=0.0f;
     /////////////////////
     public int hiddenLayerNodeWeightCount{get{return hiddenLayer[0].weights.Length;}}
@@ -85,7 +86,7 @@ public class AI
     {
         hiddenLayer = new Node[numHiddenNodes];
         for (int i=0;i<numHiddenNodes;i++){
-            var hiddenNode = new Node(7,isRandom);
+            var hiddenNode = new Node(FeatureCount,isRandom);
             hiddenLayer[i]=hiddenNode;
         }
         outputNode = new Node(numHiddenNodes,isRandom);
@@ -100,27 +101,36 @@ public class AI
     public string getText(){
         StringBuilder builder = new StringBuilder();
         int c;
+        builder.Append("|||new float[][]{");
         foreach (var i in hiddenLayer){
-            builder.Append("|||Hidden Node ");
-            builder.Append(i);
+            builder.Append("new float[]{");
             c = 0;
             foreach (var j in i.weights){
-                builder.Append(" Weight ");
-                builder.Append(c);
-                builder.Append(" is ");
                 builder.Append(j);
+                builder.Append("f");
                 c++;
+                if (c!=i.weights.Length){
+                    builder.Append(",");
+                }
+            }
+            builder.Append("}");
+            if (i!=hiddenLayer[hiddenLayer.Length-1]){
+                builder.Append(",");
             }
         }
-        builder.Append("|||Output node ");
+        builder.Append("}");
+        builder.Append("| new float[]{");
         c=0;
         foreach (var i in outputNode.weights){
-                builder.Append(" Weight ");
-                builder.Append(c);
-                builder.Append(" is ");
-                builder.Append(i);
-                c++;
+            builder.Append(i);
+            builder.Append("f");
+            c++;
+            if (c != outputNode.weights.Length)
+            {
+                builder.Append(",");
+            }
         }
+        builder.Append("}");
         return builder.ToString();
     }
     public struct ScoreAndPiece{
@@ -132,7 +142,7 @@ public class AI
     private static float[] _featureList;
     public static float[] featureList {get {
             if (_featureList==null){
-                _featureList = new float[7];//we have 6 feature + a bias
+                _featureList = new float[FeatureCount];//we have 9 feature + a bias
             }
             return _featureList;
         }
@@ -165,6 +175,7 @@ public class AI
                 float? score = null;
                 if (workingPieceIndex == (workingPieces.Count - (shouldGetExtraMove?1:2)))//rate that board state
                 {
+                    //public static string[] pieceNames= new string[7]{"Square","J","L","Z","S","T","I"};
                     featureList[0] = _grid.cumulativeHeight();
                     featureList[1] = _grid.lineCount();
                     featureList[2] = _grid.holeCount();
@@ -172,7 +183,10 @@ public class AI
                     int wellIndex;
                     featureList[4] = _grid.depthOfDeepestWell(out wellIndex);
                     featureList[5] = 0;//_grid.currentIncomingDangerousPieceCount();
-                    featureList[6] = 1;
+                    featureList[6] = wellIndex;
+                    featureList[7] = (_grid.storedPiece!=null && _grid.storedPiece.type==PieceType.I)?1:0;//The two key pieces I and T
+                    featureList[8] = (_grid.storedPiece!=null && _grid.storedPiece.type==PieceType.T)?1:0;
+                    featureList[9] = 1;//bias
                     score = 0;
                     for (int i=0;i<hiddenLayer.Length;i++){
                         score += outputNode.weights[i]*sigmoid(hiddenLayer[i].evaluate(featureList));

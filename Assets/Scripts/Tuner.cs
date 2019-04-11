@@ -188,8 +188,9 @@ public class Tuner
 
         threader.messageQueue.Enqueue("Starting...");
         //candidates.Add(defaultAI);
+        //candidates.Add(bestboi);
         for(var i = 0; i < 100; i++){
-            candidates.Add(generateRandomCandidate(4));
+            candidates.Add(generateRandomCandidate(6));
             //candidates.Add(defaultAI);
         }
 

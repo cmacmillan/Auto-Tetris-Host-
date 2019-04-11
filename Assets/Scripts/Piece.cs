@@ -1,6 +1,15 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+public enum PieceType{
+    Square=0,
+    J=1,
+    L=2,
+    Z=3,
+    S=4,
+    T=5,
+    I=6 
+}
 public class Piece
 {
     public int rowPosition;
@@ -8,10 +17,11 @@ public class Piece
     public int dimension;
     public int orientation;
     public bool[][] cells;
-    public Piece(bool[][] cells)
+    public PieceType type;
+    public Piece(bool[][] cells,PieceType type)
     {
         this.cells = cells;
-
+        this.type = type;
         this.dimension = this.cells.Length;
         this.rowPosition = 0;
         this.columnPosition = 0;
@@ -52,42 +62,42 @@ public class Piece
                 bool[][] squarePiece = new bool[][]{
                 new bool[]{true,true},
                 new bool[]{true,true}};
-                piece = new Piece(squarePiece);
+                piece = new Piece(squarePiece,PieceType.Square);
                 break;
             case 1: // J
                 bool[][] jPiece = new bool[][]{
                 new bool[]{true,false,false},
                 new bool[]{true,true,true},
                 new bool[]{false,false,false}};
-                piece = new Piece(jPiece);
+                piece = new Piece(jPiece,PieceType.J);
                 break;
             case 2: // L
                 bool[][] lPiece = new bool[][]{
                 new bool[]{false,false,true},
                 new bool[]{true,true,true},
                 new bool[]{false,false,false}};
-                piece = new Piece(lPiece);
+                piece = new Piece(lPiece,PieceType.L);
                 break;
             case 3: // Z
                 bool[][] zPiece = new bool[][]{
                 new bool[]{true,true,false},
                 new bool[]{false,true,true},
                 new bool[]{false,false,false}};
-                piece = new Piece(zPiece);
+                piece = new Piece(zPiece,PieceType.Z);
                 break;
             case 4: // S
                 bool[][] sPiece = new bool[][]{
                 new bool[]{false,true,true},
                 new bool[]{true,true,false},
                 new bool[]{false,false,false},};
-                piece = new Piece(sPiece);
+                piece = new Piece(sPiece,PieceType.S);
                 break;
             case 5: // T
                 bool[][] tPiece = new bool[][]{
                 new bool[]{false,true,false},
                 new bool[]{true,true,true},
                 new bool[]{false,false,false},};
-                piece = new Piece(tPiece);
+                piece = new Piece(tPiece,PieceType.T);
                 break;
             case 6: // I
             default:
@@ -96,7 +106,7 @@ public class Piece
                 new bool[]{true, true, true, true},
                 new bool[]{false, false, false, false},
                  new bool[]{false, false, false, false}};
-                piece = new Piece(linePiece);
+                piece = new Piece(linePiece,PieceType.I);
                 break;
 
         }
@@ -118,7 +128,7 @@ public class Piece
                 _cells[r][c] = this.cells[r][c];
             }
         }
-        var piece = new Piece(_cells);
+        var piece = new Piece(_cells,this.type);
         piece.rowPosition = this.rowPosition;
         piece.columnPosition = this.columnPosition;
         piece.orientation = this.orientation;

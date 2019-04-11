@@ -1170,7 +1170,9 @@ MonoBehaviour:
   blackClipLowerBound: 0.482
   blackClipUpperBound: 0.766
   retryCounter: 0
-  maxRetries: 10
+  maxRetries: 30
+  counts: 0
+  total: 0
   stackErrorsAllowed: 2
 --- !u!4 &1285195010
 Transform:
