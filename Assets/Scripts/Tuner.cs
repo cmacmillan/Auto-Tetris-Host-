@@ -85,51 +85,60 @@ public class Tuner
     public void sort(List<AI> candidates){
         candidates.Sort((a,b)=>(b.fitness.CompareTo(a.fitness)));
     }
+    public void computeFitness(ref AI candidate,int numberOfGames, int maxNumberOfMoves){
+        var ai = new AI(candidate);
+
+        var totalScore = 0;
+        for (var j = 0; j < numberOfGames; j++)
+        {
+            var grid = new Grid(22, 10);
+            var rpg = new RandomPieceGenerator();
+            var workingPieces = new List<Piece>(new Piece[2] { rpg.nextPiece(), rpg.nextPiece() });
+            var workingPiece = workingPieces[0];
+            var score = 0;
+            var numberOfMoves = 0;
+            while ((numberOfMoves++) < maxNumberOfMoves && !grid.isGridFull())
+            {
+                if (numberOfMoves % howManyMovesBetweenGarbageLines == (howManyMovesBetweenGarbageLines - garbageAdvancedWarningTurns))
+                {//a few turns before dumping the garbage, add it to the grid so they have time to defend themself
+                    grid.incomingDangerousPieces = garbageLinesToGive;
+                }
+                if (numberOfMoves % howManyMovesBetweenGarbageLines == 0)
+                {
+                    grid.AddGarbageLines(grid.incomingDangerousPieces);
+                    grid.incomingDangerousPieces = 0;
+                }
+                float scoreTest;
+                bool shouldSwap;//DON'T FORGET ABOUT ME!!! *thanks past self*
+                workingPiece = ai.best(grid, workingPieces, out scoreTest, out shouldSwap);
+                if (shouldSwap)
+                {
+                    grid.storedPiece = workingPieces[0];//store what is currently the 0th piece
+                }
+                while (workingPiece.moveDown(grid));
+                grid.addPiece(workingPiece);
+
+                //Instead of giving out points based on line count
+                score += grid.mappedLineCount(grid.clearLines());
+                //We are gonna give out a point for each piece you place, and just make sure that everyone dies eventually
+                //grid.clearLines();
+                //score++;
+
+                for (var k = 0; k < workingPieces.Count - 1; k++)
+                {
+                    workingPieces[k] = workingPieces[k + 1];//shuffle each working piece over by 1
+                }
+                workingPieces[workingPieces.Count - 1] = rpg.nextPiece();//get the next working piece
+                workingPiece = workingPieces[0];
+            }
+            totalScore += score;
+        }
+        candidate.fitness = UnityEngine.Mathf.Max(totalScore, .01f);
+    }
     public void computeFitnesses(List<AI> candidates, int numberOfGames, int maxNumberOfMoves){
         for(var i = 0; i < candidates.Count; i++){
             var candidate = candidates[i];
-            var ai = new AI(candidate);
-
-            var totalScore = 0;
-            for(var j = 0; j < numberOfGames; j++){
-                var grid = new Grid(22, 10);
-                var rpg = new RandomPieceGenerator();
-                var workingPieces = new List<Piece>(new Piece[2]{rpg.nextPiece(), rpg.nextPiece()});
-                var workingPiece = workingPieces[0];
-                var score = 0;
-                var numberOfMoves = 0;
-                while((numberOfMoves++) < maxNumberOfMoves && !grid.isGridFull()){
-                    if (numberOfMoves%howManyMovesBetweenGarbageLines==(howManyMovesBetweenGarbageLines-garbageAdvancedWarningTurns)){//a few turns before dumping the garbage, add it to the grid so they have time to defend themself
-                        grid.incomingDangerousPieces = garbageLinesToGive;
-                    }
-                    if (numberOfMoves%howManyMovesBetweenGarbageLines==0){
-                        grid.AddGarbageLines(grid.incomingDangerousPieces);
-                        grid.incomingDangerousPieces=0;
-                    }
-                    float scoreTest;
-                    bool shouldSwap;//DON'T FORGET ABOUT ME!!! *thanks past self*
-                    workingPiece = ai.best(grid, workingPieces,out scoreTest,out shouldSwap);
-                    if (shouldSwap){
-                        grid.storedPiece = workingPieces[0];//store what is currently the 0th piece
-                    }
-                    while(workingPiece.moveDown(grid));
-                    grid.addPiece(workingPiece);
-
-                    //Instead of giving out points based on line count
-                    score += grid.mappedLineCount(grid.clearLines());
-                    //We are gonna give out a point for each piece you place, and just make sure that everyone dies eventually
-                    //grid.clearLines();
-                    //score++;
-
-                    for(var k = 0; k < workingPieces.Count - 1; k++){
-                        workingPieces[k] = workingPieces[k + 1];//shuffle each working piece over by 1
-                    }
-                    workingPieces[workingPieces.Count - 1] = rpg.nextPiece();//get the next working piece
-                    workingPiece = workingPieces[0];
-                }
-                totalScore += score;
-            }
-            candidate.fitness = UnityEngine.Mathf.Max(totalScore,.01f);
+            computeFitness(ref candidate,numberOfGames,maxNumberOfMoves);
         }
     }
     
@@ -167,7 +176,8 @@ public class Tuner
         return candidate;
     }
     public void mutate(AI candidate){
-        var quantity = randomVal * 0.4f - 0.2f; // plus/minus 0.2
+        //var quantity = randomVal * 0.4f - 0.2f; // plus/minus 0.2
+        var quantity = randomVal * 1.0f - 0.5f; // plus/minus 0.2
         int randIndex = randomInteger(0,candidate.allWeightCount);
         candidate.setWeightAtIndex(randIndex,candidate.getWeightAtIndex(randIndex)+quantity);
     }
@@ -181,7 +191,21 @@ public class Tuner
         return retr;
     }
 
-    public void tune(){
+    public enum OptimizationMode{
+        Default = 0,
+        CrossoverHillclimbing,
+    }
+
+    public void getTwoRandomAIFromList(List<AI> list, out AI AI1, out AI AI2){
+        int randomIndex1 = randomInteger(0,list.Count);
+        int randomIndex2 = randomInteger(0,list.Count);
+        while (randomIndex2==randomIndex1){
+            randomIndex2 = randomInteger(0,list.Count);
+        }
+        AI1 = list[randomIndex1];
+        AI2 = list[randomIndex2];
+    }
+    public void tune(OptimizationMode mode = OptimizationMode.Default,int maxHillclimbingReproductionRetries=30,int candidateCount=100){
         var candidates = new List<AI>();
 
         // Initial population generation
@@ -189,43 +213,90 @@ public class Tuner
         threader.messageQueue.Enqueue("Starting...");
         //candidates.Add(defaultAI);
         //candidates.Add(bestboi);
-        for(var i = 0; i < 100; i++){
+        for(var i = 0; i < candidateCount; i++){
             candidates.Add(generateRandomCandidate(6));
             //candidates.Add(defaultAI);
         }
 
             threader.messageQueue.Enqueue("Computing fitnesses of initial population... ");
-        computeFitnesses(candidates, 5, 200);
-        sort(candidates);
         var count = 0;
-        while(true){
-            System.GC.Collect();
-            //GC.Collect();
-            var newCandidates = new List<AI>();
-            for(var i = 0; i < 30; i++){ // 30% of population
-                var pair = tournamentSelectPair(candidates, 10); // 10% of population
-                //console.log('fitnesses = ' + pair[0].fitness + ',' + pair[1].fitness);
-                var candidate = crossOver(pair[0], pair[1]);
-                normalize(candidate);
-                newCandidates.Add(candidate);
-            }
-            for(int i=0;i<newCandidates.Count;i++){
-                if(randomVal < 0.05f){// 5% chance of mutation
-                    mutate(newCandidates[i]);
-                    normalize(newCandidates[i]);
+        switch (mode)
+        {
+            case (OptimizationMode.CrossoverHillclimbing):
+                computeFitnesses(candidates, 5, 200);
+                AI bestAI = null;
+                float bestFitness = -1;
+                foreach (var i in candidates){
+                    if (i.fitness>bestFitness){
+                        bestAI = i;
+                        bestFitness = i.fitness;
+                    }
                 }
-            }
-            threader.messageQueue.Enqueue("Computing fitnesses of "+candidates.Count+" new candidates. (" + count + ")");
-            computeFitnesses(newCandidates, 5, 200);
-            candidates=deleteNLastReplacement(candidates, newCandidates);
-            float totalFitness = 0.0f;
-            for(var i = 0; i < candidates.Count; i++){
-                totalFitness += candidates[i].fitness;
-            }
-            threader.messageQueue.Enqueue("Average fitness = " + (totalFitness / candidates.Count));
-            threader.messageQueue.Enqueue("Highest fitness = " + candidates[0].fitness + "(" + count + ")");
-            threader.messageQueue.Enqueue("Fittest candidate = " + candidates[0].getText() + "(" + count + ")");
-            count++;
+                while (true){
+                    AI ai1;
+                    AI ai2;
+                    getTwoRandomAIFromList(candidates,out ai1,out ai2);
+                    AI weakerParent = ai1.fitness>ai2.fitness?ai2:ai1;
+                    int retryCounter=0;
+                    AI newAI = crossOver(ai1,ai2);
+                    computeFitness(ref newAI,5,200);
+                    while (newAI.fitness<=weakerParent.fitness && retryCounter<maxHillclimbingReproductionRetries){
+                        newAI = crossOver(ai1,ai2);
+                        while (randomVal<.05f){
+                            mutate(newAI);
+                        }
+                        computeFitness(ref newAI,5,200);
+                        retryCounter++;
+                    }
+                    if (retryCounter>=maxHillclimbingReproductionRetries){//we kill the weak parent
+                        candidates.Remove(weakerParent);
+                        threader.messageQueue.Enqueue("Weak parent killed w/ fitness:"+weakerParent.fitness+"only "+candidates.Count+" organisms left");
+                    } else {//we insert the strong child
+                        candidates.Add(newAI);
+                        candidates.Remove(weakerParent);
+                        threader.messageQueue.Enqueue("Strong child added w/ fitness:"+newAI.fitness+"only "+candidates.Count+" organisms left");
+                        if (newAI.fitness>bestFitness){
+                            bestFitness=newAI.fitness;
+                            bestAI = newAI;
+                            threader.messageQueue.Enqueue("New best found: "+newAI.fitness+" "+newAI.getText());
+                        }
+                    }
+                }
+            case (OptimizationMode.Default):
+                computeFitnesses(candidates, 5, 200);
+                sort(candidates);
+                while (true)
+                {
+                    var newCandidates = new List<AI>();
+                    for (var i = 0; i < 30; i++)
+                    { // 30% of population
+                        var pair = tournamentSelectPair(candidates, 10); // 10% of population
+                                                                         //console.log('fitnesses = ' + pair[0].fitness + ',' + pair[1].fitness);
+                        var candidate = crossOver(pair[0], pair[1]);
+                        normalize(candidate);
+                        newCandidates.Add(candidate);
+                    }
+                    for (int i = 0; i < newCandidates.Count; i++)
+                    {
+                        if (randomVal < 0.05f)
+                        {// 5% chance of mutation
+                            mutate(newCandidates[i]);
+                            normalize(newCandidates[i]);
+                        }
+                    }
+                    threader.messageQueue.Enqueue("Computing fitnesses of " + candidates.Count + " new candidates. (" + count + ")");
+                    computeFitnesses(newCandidates, 5, 200);
+                    candidates = deleteNLastReplacement(candidates, newCandidates);
+                    float totalFitness = 0.0f;
+                    for (var i = 0; i < candidates.Count; i++)
+                    {
+                        totalFitness += candidates[i].fitness;
+                    }
+                    threader.messageQueue.Enqueue("Average fitness = " + (totalFitness / candidates.Count));
+                    threader.messageQueue.Enqueue("Highest fitness = " + candidates[0].fitness + "(" + count + ")");
+                    threader.messageQueue.Enqueue("Fittest candidate = " + candidates[0].getText() + "(" + count + ")");
+                    count++;
+                }
         }
     }
 }

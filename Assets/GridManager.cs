@@ -115,30 +115,30 @@ public class GridManager : MonoBehaviour
         webTex.Play();
         texReader = new WebCamTextureReader(webTex);
         parser = new ImageParser();
+
         serialPort = new SerialPort("COM4");
         serialPort.Open();
+
+        //var hidden = new float[][]{new float[]{-0.124989f,-0.1017407f,-0.017204f,-0.05285831f,-0.1632256f,-0.1229144f,0.1468558f,0.1733466f,-0.01379704f,-0.04884072f},new float[]{0.06701881f,0.1296504f,-0.1691546f,-0.06467521f,0.08387455f,0.01007559f,-0.1146168f,0.02250497f,-0.05856169f,0.01976753f},new float[]{0.07492498f,0.06087319f,0.00974778f,0.08670526f,0.02432012f,-0.1967617f,-0.05978735f,0.1064113f,-0.009848824f,0.08944389f},new float[]{0.1795718f,-0.1561709f,0.195365f,0.02036583f,-0.06817012f,0.1336053f,0.2094683f,-0.1223732f,0.1966623f,0.07078082f},new float[]{-0.09267804f,-0.1650909f,-0.02041569f,0.1687265f,-0.0628737f,-0.03674628f,0.1731851f,0.03577825f,-0.1745731f,-0.008868891f},new float[]{0.1945499f,-0.1792737f,0.143742f,0.1026724f,0.05235604f,0.1432104f,-0.01193407f,-0.1642612f,0.04138514f,-0.1876945f}};
+        //var output = new float[]{-0.2117069f,0.02476261f,0.3175913f,-0.1332365f,-0.04158771f,0.1032587f};
+
+        //var hidden = new float[][]{new float[]{-0.01722956f,-0.001200735f,0.1058882f,-0.1649587f,-0.05572532f,0.06740309f,-0.1825911f,-0.03604231f,0.09433642f,0.02086099f},new float[]{0.08266924f,-0.2018432f,0.06993485f,0.07319879f,-0.06021373f,0.1187011f,-0.168699f,0.126995f,0.09166251f,0.06381043f},new float[]{-0.04769717f,-0.09437438f,0.2996441f,0.1229649f,-0.05736132f,-0.09521287f,-0.00101446f,0.2209754f,-0.1118632f,-0.07392432f},new float[]{0.07279565f,0.07357775f,0.07403342f,-0.1106506f,-0.02222583f,0.1216516f,-0.1737296f,0.192083f,0.2339994f,-0.1954645f},new float[]{0.1761405f,0.144941f,0.1474033f,0.01479625f,-0.1112691f,0.1719125f,-0.2077321f,-0.1627003f,0.01284673f,0.05013131f},new float[]{-0.03104067f,-0.1170413f,0.1556573f,-0.06784593f,-0.121552f,-0.008807124f,0.1126179f,0.1607066f,0.06652916f,0.1147001f}};
+        //var output = new float[]{-0.05743029f,-0.1554509f,-0.1475399f,-0.08506642f,-0.1176796f,-0.07113711f};
+
+        var hidden = new float[][]{new float[]{-0.1894776f,0.1942693f,-0.06384408f,-0.1139663f,-0.1510776f,-0.1285644f,0.1298891f,-0.06082395f,0.01032505f,0.1657506f},new float[]{-0.02655053f,-0.2050364f,0.2310304f,0.05208316f,-0.1196015f,0.1078144f,0.02419173f,-0.1228017f,0.006613073f,-0.1190449f},new float[]{-0.1415554f,-0.1740705f,-0.08192593f,-0.006732835f,-0.08210847f,-0.1851131f,-0.06777398f,-0.1916335f,0.02594075f,-0.007492651f},new float[]{-0.1654021f,0.109265f,0.02748146f,-0.1546614f,-0.05311112f,-0.03227581f,-0.03184801f,-0.06195474f,-0.06691378f,-0.1781225f},new float[]{0.1002495f,0.0007571134f,0.1753846f,-0.143003f,-0.1433012f,-0.1389333f,-0.1801796f,0.07059894f,0.1338539f,0.09333713f},new float[]{0.1626995f,-0.1442069f,0.02619692f,0.108213f,-0.1920563f,0.1161526f,0.08849461f,0.08796613f,0.1835862f,0.1026516f}};
+        var output = new float[]{0.1308508f,-0.1776593f,-0.07704101f,-0.03545431f,-0.04140297f,-0.1596491f};
+
+        ai = new AI(hidden,output);
+
         InitGrid();
         addNewPiece(0);
-        //ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f);
-        //ai = new AI(0.510066f, 0.760666f, 0.35663f, 0.184483f,0.0f);
-        //ai = new AI(0.3854164f, 0.4151678f, 0.5825204f, 0.2002547f,.5474103f,0.0f);
-        //ai = new AI(-.7099133f,.1904075f,-.5484136f,-.328164f,.226513f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f);
-        //ai = new AI(0.4761154f,-0.178722f,0.1052099f,0.1604183f,-0.3272133f,0f,0.4059066f,0.05158215f,0.4510338f,0.1784792f,-0.08990175f,0f,-0.04769336f,-0.4294609f);
-        //ai = null;//new AI(0.4761154f,-0.178722f,0.1052099f,0.1604183f,-0.3272133f,0f,0.4059066f,0.05158215f,0.4510338f,0.1784792f,-0.08990175f,0f,-0.04769336f,-0.4294609f);
-
-        /*var hiddenLayer =  new float[][] {new float[]{0.05135237f,-0.08543333f,0.2260057f,0.04500022f,-0.1782784f,-0.1872165f,0.1083222f},
-                                          new float[]{0.03638845f,0.04695151f,-0.1232617f,0.324007f,-0.236885f,0.01616357f,0.1052339f},
-                                          new float[]{-0.227432f,-0.1426937f,-0.07757474f,0.1562822f,-0.1435926f,0.2006811f,-0.1685878f},
-                                          new float[]{-0.006258688f,-0.02381169f,-0.3186462f,-0.2092004f,0.06298456f,-0.2479657f,-0.2992261f}};
-        var outputLayer = new float[]{-0.2979864f,0.2858127f,0.006858489f,0.06301055f};
-        ai = new AI(hiddenLayer,outputLayer);*/
 
         provider = new ImageProvider();
         drawGrid(grid1);
-        threader.messageQueue = new ConcurrentQueue<string>();
+        /*threader.messageQueue = new ConcurrentQueue<string>();
         ThreadStart start = new ThreadStart(threader.runTuner);
         Thread t = new Thread(start);
-        t.Start();
+        t.Start();*/
     }
     ImageProvider provider;
     SerialPort serialPort;
@@ -218,7 +218,7 @@ public class GridManager : MonoBehaviour
             }
             return;
         }*/
-        if (true){
+        /*if (true){
             string message;
             if (threader.messageQueue.Count>0){
                 if (threader.messageQueue.TryDequeue(out message)){
@@ -226,7 +226,7 @@ public class GridManager : MonoBehaviour
                 }
             }
             return;
-        }
+        }*/
         /*if (true){
             texReader.update();
             //parser.updateGridWithImage(texReader, grid1, 742, 94, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
@@ -266,11 +266,16 @@ public class GridManager : MonoBehaviour
                 if (hasUpNextChanged(upNext,nextUpNext)){
                     if (!isUsingStorePieceForFirstTime){
                         parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, 7, false);
+                        //parser.updateGridIncomingDangerousPieces(grid1,texReader,677,245,1015,.1f,48,7);
+                        parser.updateGridIncomingDangerousPieces(grid1,texReader,677,1080-1015,1080-245,.1f,48,7);
+                        Debug.Log("DANGER:"+grid1.incomingDangerousPieces);
                         drawGrid(grid1);
                         drawGrid(grid2, true);
                         int doGridsMatch = grid1.DoGridsMatch(grid2);
                         if (doGridsMatch > 0)
                         {
+                            errorCount++;
+                            Debug.Log("errors:"+errorCount);
                             currentState = ProgramState.RetryingUpdateGrid;
                         }
                         else
@@ -291,6 +296,7 @@ public class GridManager : MonoBehaviour
             case ProgramState.RetryingUpdateGrid:
                 texReader.update();
                 parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, 7, false);
+                parser.updateGridIncomingDangerousPieces(grid1,texReader,677,1080-1015,1080-245,.1f,48,7);
                 drawGrid(grid1);
                 drawGrid(grid2, true);
                 int doGridsMatch2=grid1.DoGridsMatch(grid2);
@@ -348,7 +354,8 @@ public class threader
         var output = new float[]{-0.05743029f,-0.1554509f,-0.1475399f,-0.08506642f,-0.1176796f,-0.07113711f};
         try{
         //(new Tuner(0,1,1)).tune(new AI(hidden,output));
-        (new Tuner(0,1,1)).tune();
+        //(new Tuner(0,1,1)).tune(Tuner.OptimizationMode.Default,0,500);
+        (new Tuner(5,4,3)).tune(Tuner.OptimizationMode.Default,candidateCount:100);
         } catch (System.Exception e){
             messageQueue.Append(e.ToString());
         }
@@ -356,3 +363,4 @@ public class threader
         //Fittest candidate = (50)
     }
 }
+/*Fittest candidate = |||new float[][]{new float[]{-0.09227461f,-0.05090936f,-0.1263104f,-0.08650486f,0.1886919f,0.02038135f,0.04493413f,-0.03661074f,-0.1282303f,0.06211886f},new float[]{-0.1126875f,-0.02184402f,-0.1009445f,-0.162465f,0.03031271f,0.1813795f,-0.0866359f,-0.0732364f,0.1904653f,-0.01621882f},new float[]{-0.1961451f,0.1136922f,-0.02083379f,-0.07489778f,0.2026662f,0.0905307f,0.110718f,0.07222536f,0.025323f,-0.190484f},new float[]{0.07476681f,-0.1731973f,-0.1628957f,-0.009686224f,0.2340751f,0.1959788f,-0.1091354f,-0.02122156f,-0.1191274f,-0.1635511f},new float[]{-0.01456686f,0.1781572f,-0.2331599f,-0.02088971f,0.1461268f,-0.0678914f,0.1684979f,0.1422551f,0.02372402f,0.1002322f},new float[]{-0.1986706f,-0.1031703f,0.1135129f,-0.1344844f,0.1132718f,-0.1715041f,-0.003374083f,0.1803966f,-0.1375954f,0.09158767f}}| new float[]{-0.00539224f,-0.05373659f,0.1857107f,-0.01199952f,0.06179959f,-0.080216f}(1024) */

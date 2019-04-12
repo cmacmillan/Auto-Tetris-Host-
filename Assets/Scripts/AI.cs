@@ -182,7 +182,7 @@ public class AI
                     featureList[3] = _grid.bumpiness();
                     int wellIndex;
                     featureList[4] = _grid.depthOfDeepestWell(out wellIndex);
-                    featureList[5] = 0;//_grid.currentIncomingDangerousPieceCount();
+                    featureList[5] = _grid.currentIncomingDangerousPieceCount();
                     featureList[6] = wellIndex;
                     featureList[7] = (_grid.storedPiece!=null && _grid.storedPiece.type==PieceType.I)?1:0;//The two key pieces I and T
                     featureList[8] = (_grid.storedPiece!=null && _grid.storedPiece.type==PieceType.T)?1:0;

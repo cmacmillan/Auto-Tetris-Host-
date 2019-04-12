@@ -86,6 +86,22 @@ public class ImageParser
         }
         return retr;
     }
+    public void updateGridIncomingDangerousPieces(Grid grid,
+                                                    IPixelReadable image,
+                                                    int incomingDangerousPiecesX,
+                                                    int incomingDangerousPiecesStartY,
+                                                    int incomingDangerousPiecesEndY,
+                                                    float blackBrightnessLowerBound,
+                                                    int boxHeightDivisor,
+                                                    int plusMinusSpread)
+    {
+        int numberOfColoredPieces=0;
+        for (int i=incomingDangerousPiecesStartY;i<incomingDangerousPiecesEndY;i++){
+            numberOfColoredPieces+=isCellIlluminated(image,incomingDangerousPiecesX,i,blackBrightnessLowerBound,1.0f,plusMinusSpread)?1:0;
+        }
+        grid.incomingDangerousPieces = numberOfColoredPieces/boxHeightDivisor;
+    }
+
     public void updateGridWithImage(
                                     IPixelReadable image,
                                     Grid grid,
@@ -107,24 +123,30 @@ public class ImageParser
             for (int y=0;y<rowCount;y++){
                 int xPixelPos = startingX+x*cellWidth;
                 int yPixelPos = startingY+y*cellHeight;
-                var cellColor = image.getPixel(xPixelPos,yPixelPos);
-                var cellColorPlus = image.getPixel(xPixelPos+plusMinusSpread,yPixelPos);
-                var cellColorMinus = image.getPixel(xPixelPos-plusMinusSpread,yPixelPos);
-                var brightness = cellBrightness(cellColor);
-                var brightness2 = cellBrightness(cellColorPlus);
-                var brightness3 = cellBrightness(cellColorMinus);
-                int brightnessCount=0;
-                brightnessCount += (brightness<blackBrightnessLowerBound || brightness>blackBrightnessUpperBound)?0:1;
-                brightnessCount += (brightness2<blackBrightnessLowerBound || brightness2>blackBrightnessUpperBound)?0:1;
-                brightnessCount += (brightness3<blackBrightnessLowerBound || brightness3>blackBrightnessUpperBound)?0:1;
-                if (brightnessCount<2){
-                    cells[rowCount-y-1][x]=false;
-                } else {
-                    cells[rowCount-y-1][x]=true;
-                }
+                cells[rowCount-y-1][x] = isCellIlluminated(image,xPixelPos,yPixelPos,blackBrightnessLowerBound,blackBrightnessUpperBound,plusMinusSpread);
             }
         }
         grid.cells = cells;
+    }
+    public bool isCellIlluminated(IPixelReadable image,int x, int y,float blackBrightnessLowerBound,float blackBrightnessUpperBound,int plusMinusSpread){
+        var cellColor = image.getPixel(x, y);
+        var cellColorPlus = image.getPixel(x + plusMinusSpread, y);
+        var cellColorMinus = image.getPixel(x - plusMinusSpread, y);
+        var brightness = cellBrightness(cellColor);
+        var brightness2 = cellBrightness(cellColorPlus);
+        var brightness3 = cellBrightness(cellColorMinus);
+        int brightnessCount = 0;
+        brightnessCount += (brightness < blackBrightnessLowerBound || brightness > blackBrightnessUpperBound) ? 0 : 1;
+        brightnessCount += (brightness2 < blackBrightnessLowerBound || brightness2 > blackBrightnessUpperBound) ? 0 : 1;
+        brightnessCount += (brightness3 < blackBrightnessLowerBound || brightness3 > blackBrightnessUpperBound) ? 0 : 1;
+        if (brightnessCount < 2)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
     public float cellBrightness(Color c){
         return Mathf.Max(c.r,Mathf.Max(c.g,c.b));
