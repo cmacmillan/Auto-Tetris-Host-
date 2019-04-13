@@ -55,10 +55,13 @@ public class Tuner
         }
     }
     public int garbageLinesToGive;
+    //public int garbageLinesToGiveBase;
     public int howManyMovesBetweenGarbageLines;
     public int garbageAdvancedWarningTurns;
-    public Tuner(int garbageLineCount,int garbageLineFrequency,int warningTurns){
-        garbageLinesToGive = garbageLineCount;
+    public int startupDelay;
+    public Tuner(int garbageLineCountInital,int garbageLineFrequency,int warningTurns,int startupDelay){
+        this.startupDelay = startupDelay;
+        garbageLinesToGive = garbageLineCountInital;
         howManyMovesBetweenGarbageLines = garbageLineFrequency;
         garbageAdvancedWarningTurns = warningTurns;
     }
@@ -99,12 +102,16 @@ public class Tuner
             var numberOfMoves = 0;
             while ((numberOfMoves++) < maxNumberOfMoves && !grid.isGridFull())
             {
-                if (numberOfMoves % howManyMovesBetweenGarbageLines == (howManyMovesBetweenGarbageLines - garbageAdvancedWarningTurns))
+                if (numberOfMoves % howManyMovesBetweenGarbageLines == (howManyMovesBetweenGarbageLines - garbageAdvancedWarningTurns)&& numberOfMoves>startupDelay)
                 {//a few turns before dumping the garbage, add it to the grid so they have time to defend themself
                     grid.incomingDangerousPieces = garbageLinesToGive;
                 }
                 if (numberOfMoves % howManyMovesBetweenGarbageLines == 0)
                 {
+                    while (grid.incomingDangerousPieces>5){
+                        grid.AddGarbageLines(5);
+                        grid.incomingDangerousPieces-=5;
+                    }
                     grid.AddGarbageLines(grid.incomingDangerousPieces);
                     grid.incomingDangerousPieces = 0;
                 }
@@ -205,7 +212,7 @@ public class Tuner
         AI1 = list[randomIndex1];
         AI2 = list[randomIndex2];
     }
-    public void tune(OptimizationMode mode = OptimizationMode.Default,int maxHillclimbingReproductionRetries=30,int candidateCount=100){
+    public void tune(OptimizationMode mode = OptimizationMode.Default,int hiddenNodeCount=10,int maxHillclimbingReproductionRetries=30,int candidateCount=100){
         var candidates = new List<AI>();
 
         // Initial population generation
@@ -214,7 +221,7 @@ public class Tuner
         //candidates.Add(defaultAI);
         //candidates.Add(bestboi);
         for(var i = 0; i < candidateCount; i++){
-            candidates.Add(generateRandomCandidate(6));
+            candidates.Add(generateRandomCandidate(hiddenNodeCount));
             //candidates.Add(defaultAI);
         }
 
@@ -278,14 +285,15 @@ public class Tuner
                     }
                     for (int i = 0; i < newCandidates.Count; i++)
                     {
-                        if (randomVal < 0.05f)
+                        while (randomVal < 0.05f)
                         {// 5% chance of mutation
                             mutate(newCandidates[i]);
-                            normalize(newCandidates[i]);
                         }
+                        normalize(newCandidates[i]);
                     }
                     threader.messageQueue.Enqueue("Computing fitnesses of " + candidates.Count + " new candidates. (" + count + ")");
                     computeFitnesses(newCandidates, 5, 200);
+                    sort(candidates);
                     candidates = deleteNLastReplacement(candidates, newCandidates);
                     float totalFitness = 0.0f;
                     for (var i = 0; i < candidates.Count; i++)
