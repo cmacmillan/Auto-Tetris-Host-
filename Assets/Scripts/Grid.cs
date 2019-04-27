@@ -82,16 +82,17 @@ public class Grid
         this.incomingDangerousPieces = Mathf.Max(0,this.incomingDangerousPieces-mappedLineCount(distance));
         return distance;
     }
-    public bool isOneCellAwayFromALine(int rowIndex){
-        bool haveEncounteredAMissingCell=false;
+    public bool isOneCellAwayFromALine(int rowIndex,out int emptyIndex){
+        emptyIndex=-1;
         for (int i = 0; i < this.columnCount; i++)
         {
             if (this.cells[rowIndex][i] == false)
             {
-                if (haveEncounteredAMissingCell){
+                if (emptyIndex!=-1){
+                    emptyIndex=-1;
                     return false;
                 } else {
-                    haveEncounteredAMissingCell=true;
+                    emptyIndex = i;
                 }
             }
         }
@@ -123,7 +124,7 @@ public class Grid
 
     public bool isGridFull()
     {
-        return !this.isEmptyRow(0) || !this.isEmptyRow(1);
+        return !this.isEmptyRow(0) || !this.isEmptyRow(1)||!this.isEmptyRow(2)||!this.isEmptyRow(3)||!this.isEmptyRow(4);
     }
 
     /*public int heightOfHighestRow()
@@ -132,6 +133,30 @@ public class Grid
         for (; i < this.rowCount && this.isEmptyRow(i); i++) ;//damn the fucking madman
         return i;
     }*/
+    private static int[] totalDepthOfNearCompletedLinesDepthStorage;
+    public int totalDepthOfNearCompletedLines(){
+        if (totalDepthOfNearCompletedLinesDepthStorage==null){
+            totalDepthOfNearCompletedLinesDepthStorage = new int[columnCount];
+        }
+        for (int i=0;i<columnCount;i++){
+            totalDepthOfNearCompletedLinesDepthStorage[i]=0;
+        }
+        int totalDepth=0;
+        for (int i=0;i<rowCount;i++){
+            int missingCellOut;
+            if (isOneCellAwayFromALine(i,out missingCellOut) && missingCellOut!=-1)
+            {
+                totalDepth+=totalDepthOfNearCompletedLinesDepthStorage[missingCellOut];
+            }
+            if (!isLine(i)){
+                for (int x = 0; x < columnCount; x++)
+                {
+                    totalDepthOfNearCompletedLinesDepthStorage[x] += cells[i][x] ? 1 : 0;
+                }
+            }
+        }
+        return totalDepth;
+    }
     
     ///<summary>a well is defined as a pit with a width of 1,
     ///cells don't contribute to a well's depth unless they are the only missing element in the row,
@@ -139,11 +164,12 @@ public class Grid
     public int depthOfDeepestWell(out int bestIndex){
         int currentBestDepth=0;
         int currentBestIndex=-1;
+        int missingCellOut;
         for (int i=0;i<columnCount;i++){
             int currDepth=0;
             int height = rowCount-columnHeight(i)-1;
             while (height>=0){
-                if (isOneCellAwayFromALine(height)){
+                if (isOneCellAwayFromALine(height,out missingCellOut)){
                     currDepth++;
                 }
                 height--;
@@ -199,13 +225,16 @@ public class Grid
             case 0:
                 return 0;
             case 1:
-                return 1;
+                return 0;
             case 2:
-                return 3;
+                return 1;
+                //return 3;
             case 3:
-                return 5;
+                return 1;
+                //return 5;
             case 4:
-                return 8;
+                return 4;
+                //return 8;
             default:
                 return 0;
         }

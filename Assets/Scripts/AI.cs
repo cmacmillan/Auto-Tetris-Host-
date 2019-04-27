@@ -42,7 +42,7 @@ public class Node{
 public class AI
 {
     //const int FeatureCount=20;//10;//This includes the bias
-    const int FeatureCount=10;
+    const int FeatureCount=11;
     public float fitness=0.0f;
     /////////////////////
     public int hiddenLayerNodeWeightCount{get{return hiddenLayer[0].weights.Length;}}
@@ -187,7 +187,8 @@ public class AI
                     featureList[6] = wellIndex;
                     featureList[7] = (_grid.storedPiece!=null && _grid.storedPiece.type==PieceType.I)?1:0;//The two key pieces I and T
                     featureList[8] = (_grid.storedPiece!=null && _grid.storedPiece.type==PieceType.T)?1:0;
-                    featureList[9] = 1;//bias
+                    featureList[9] = _grid.totalDepthOfNearCompletedLines();
+                    featureList[10] = 1;//bias
                     ///
                     /*for (int i=0;i<10;i++){
                         int featureIndex = i+9;

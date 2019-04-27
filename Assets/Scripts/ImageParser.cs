@@ -132,14 +132,20 @@ public class ImageParser
         var cellColor = image.getPixel(x, y);
         var cellColorPlus = image.getPixel(x + plusMinusSpread, y);
         var cellColorMinus = image.getPixel(x - plusMinusSpread, y);
+        var upCellColorPlus = image.getPixel(x,y+plusMinusSpread);
+        var upCellColorMinus = image.getPixel(x, y-plusMinusSpread);
         var brightness = cellBrightness(cellColor);
         var brightness2 = cellBrightness(cellColorPlus);
         var brightness3 = cellBrightness(cellColorMinus);
+        var brightness4 = cellBrightness(upCellColorMinus);
+        var brightness5 = cellBrightness(upCellColorMinus);
         int brightnessCount = 0;
         brightnessCount += (brightness < blackBrightnessLowerBound || brightness > blackBrightnessUpperBound) ? 0 : 1;
         brightnessCount += (brightness2 < blackBrightnessLowerBound || brightness2 > blackBrightnessUpperBound) ? 0 : 1;
         brightnessCount += (brightness3 < blackBrightnessLowerBound || brightness3 > blackBrightnessUpperBound) ? 0 : 1;
-        if (brightnessCount < 2)
+        brightnessCount += (brightness4 < blackBrightnessLowerBound || brightness4 > blackBrightnessUpperBound) ? 0 : 1;
+        brightnessCount += (brightness5 < blackBrightnessLowerBound || brightness5 > blackBrightnessUpperBound) ? 0 : 1;
+        if (brightnessCount < 5)//allow for one error
         {
             return false;
         }
@@ -166,31 +172,16 @@ public class ImageParser
 public interface IPixelReadable
 {
    Color32 getPixel(int x,int y);
+   void update();
 }
-/*public class TextureReader: IPixelReadable {
-    private Color[] colors;
-    private int width;
-    public TextureReader(Texture2D tex){
-        colors = tex.GetPixels();
-        width = tex.width;
-    }
-    public Color32 getPixel(int x, int y){
-        return colors[x+y*width];
-    }
-}*/
 
 public class WebCamTextureReader:IPixelReadable{
     private Color32[] colors;
     private int width;
-    //private Texture2D copytex;
     public WebCamTexture tex;
     public WebCamTextureReader(WebCamTexture tex){
-        //copytex = new Texture2D(1920,1080);
-        //Texture2D holder = new Texture2D(1920,1080);
-        //holder.SetPixels(tex.GetPixels());
         this.tex = tex;
         width = tex.width;
-        //colors = holder.GetPixels();
         if (colors==null){
             colors = new Color32[tex.height*tex.width];
         }
@@ -200,6 +191,23 @@ public class WebCamTextureReader:IPixelReadable{
         colors = tex.GetPixels32(colors);
     }
     public Color32 getPixel(int x, int y){
+        return colors[x+y*width];
+    }
+}
+public class ScreenShotTextureReader:IPixelReadable{
+    private Color32[] colors;
+    private Texture2D tex;
+    private int width;
+    public ScreenShotTextureReader(){
+        update();
+    }
+    public void update(){
+        tex = ScreenCapture.CaptureScreenshotAsTexture();
+        width = tex.width;
+        colors = tex.GetPixels32();
+    }
+    public Color32 getPixel(int x, int y)
+    {
         return colors[x+y*width];
     }
 }

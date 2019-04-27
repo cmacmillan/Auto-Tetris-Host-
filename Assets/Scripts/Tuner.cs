@@ -215,6 +215,7 @@ public class Tuner
     public void tune(OptimizationMode mode = OptimizationMode.Default,int hiddenNodeCount=10,int maxHillclimbingReproductionRetries=30,int candidateCount=100){
         var candidates = new List<AI>();
 
+        
         // Initial population generation
 
         threader.messageQueue.Enqueue("Starting...");
@@ -291,7 +292,7 @@ public class Tuner
                         }
                         normalize(newCandidates[i]);
                     }
-                    threader.messageQueue.Enqueue("Computing fitnesses of " + candidates.Count + " new candidates. (" + count + ")");
+                    threader.messageQueue.Enqueue("Computing fitnesses of " + newCandidates.Count + " new candidates. (" + count + ")");
                     computeFitnesses(newCandidates, 5, 200);
                     sort(candidates);
                     candidates = deleteNLastReplacement(candidates, newCandidates);
