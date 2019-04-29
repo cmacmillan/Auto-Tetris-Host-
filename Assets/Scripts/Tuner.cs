@@ -292,7 +292,7 @@ public class Tuner
                         }
                         normalize(newCandidates[i]);
                     }
-                    threader.messageQueue.Enqueue("Computing fitnesses of " + newCandidates.Count + " new candidates. (" + count + ")");
+                    threader.messageQueue.Enqueue("Computing fitnesses of " + candidates.Count + " new candidates. (" + count + ")");
                     computeFitnesses(newCandidates, 5, 200);
                     sort(candidates);
                     candidates = deleteNLastReplacement(candidates, newCandidates);

@@ -237,17 +237,18 @@ public class GridManager : MonoBehaviour
             }
             return;
         }
-        /*if (true){
+        if (true){
             texReader.update();
             //parser.updateGridWithImage(texReader, grid1, 742, 94, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
             parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
             int index=-1;
-            Debug.Log(grid1.depthOfDeepestWell(out index)+"|"+index);
+            //Debug.Log(grid1.depthOfDeepestWell(out index)+"|"+index);
+            Debug.Log(grid1.totalDepthOfNearCompletedLines());//+"|"+index);
             drawGrid(grid1,false);
             upNext = parser.getUpNextColors(texReader,1260,135,1256,228,82,5,30,22);
             drawUpNext();
             return;
-        }*/
+        }
         if (upNext!=null && nextUpNext!=null){
             stateText.text = currentState.ToString()+"| stored:"+(grid1.storedPiece!=null?grid1.storedPiece.getPieceName():"---");//"| Dropping:"+parser.colorIndexToName[upNext[0]];
             drawUpNext();
@@ -361,7 +362,7 @@ public class threader
         //var hidden = new float[][]{new float[]{-0.01722956f,-0.001200735f,0.1058882f,-0.1649587f,-0.05572532f,0.06740309f,-0.1825911f,-0.03604231f,0.09433642f,0.02086099f},new float[]{0.08266924f,-0.2018432f,0.06993485f,0.07319879f,-0.06021373f,0.1187011f,-0.168699f,0.126995f,0.09166251f,0.06381043f},new float[]{-0.04769717f,-0.09437438f,0.2996441f,0.1229649f,-0.05736132f,-0.09521287f,-0.00101446f,0.2209754f,-0.1118632f,-0.07392432f},new float[]{0.07279565f,0.07357775f,0.07403342f,-0.1106506f,-0.02222583f,0.1216516f,-0.1737296f,0.192083f,0.2339994f,-0.1954645f},new float[]{0.1761405f,0.144941f,0.1474033f,0.01479625f,-0.1112691f,0.1719125f,-0.2077321f,-0.1627003f,0.01284673f,0.05013131f},new float[]{-0.03104067f,-0.1170413f,0.1556573f,-0.06784593f,-0.121552f,-0.008807124f,0.1126179f,0.1607066f,0.06652916f,0.1147001f}};
         //var output = new float[]{-0.05743029f,-0.1554509f,-0.1475399f,-0.08506642f,-0.1176796f,-0.07113711f};
         try{
-            (new Tuner(10,5,4,25)).tune(Tuner.OptimizationMode.Default,candidateCount:500,hiddenNodeCount:6);
+            (new Tuner(10,5,4,25)).tune(Tuner.OptimizationMode.Default,candidateCount:100,hiddenNodeCount:6);
         } catch (System.Exception e){
             messageQueue.Enqueue("Exception!");
             messageQueue.Enqueue(e.ToString());

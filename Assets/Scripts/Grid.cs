@@ -230,7 +230,7 @@ public class Grid
                 return 1;
                 //return 3;
             case 3:
-                return 1;
+                return 2;
                 //return 5;
             case 4:
                 return 4;

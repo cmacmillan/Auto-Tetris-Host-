@@ -145,7 +145,7 @@ public class ImageParser
         brightnessCount += (brightness3 < blackBrightnessLowerBound || brightness3 > blackBrightnessUpperBound) ? 0 : 1;
         brightnessCount += (brightness4 < blackBrightnessLowerBound || brightness4 > blackBrightnessUpperBound) ? 0 : 1;
         brightnessCount += (brightness5 < blackBrightnessLowerBound || brightness5 > blackBrightnessUpperBound) ? 0 : 1;
-        if (brightnessCount < 5)//allow for one error
+        if (brightnessCount < 4||y>971)//allow 2 errors, 971 is height of top row
         {
             return false;
         }
