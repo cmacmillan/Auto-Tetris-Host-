@@ -97,7 +97,7 @@ public class ImageParser
     {
         int numberOfColoredPieces=0;
         for (int i=incomingDangerousPiecesStartY;i<incomingDangerousPiecesEndY;i++){
-            numberOfColoredPieces+=isCellIlluminated(image,incomingDangerousPiecesX,i,blackBrightnessLowerBound,1.0f,plusMinusSpread)?1:0;
+            numberOfColoredPieces+=isCellIlluminated(image,incomingDangerousPiecesX,i,blackBrightnessLowerBound,1.0f,plusMinusSpread,4)?1:0;
         }
         grid.incomingDangerousPieces = numberOfColoredPieces/boxHeightDivisor;
     }
@@ -114,7 +114,9 @@ public class ImageParser
                                     float blackBrightnessLowerBound,
                                     float blackBrightnessUpperBound,
                                     int plusMinusSpread,
-                                    bool areCellsInited=false){
+                                    int brightnessErrorCount,
+                                    bool areCellsInited=false
+                                    ){
         //initing cells if not already correctly allocated
         if (!areCellsInited){
             initCells(rowCount,columnCount);
@@ -123,12 +125,12 @@ public class ImageParser
             for (int y=0;y<rowCount;y++){
                 int xPixelPos = startingX+x*cellWidth;
                 int yPixelPos = startingY+y*cellHeight;
-                cells[rowCount-y-1][x] = isCellIlluminated(image,xPixelPos,yPixelPos,blackBrightnessLowerBound,blackBrightnessUpperBound,plusMinusSpread);
+                cells[rowCount-y-1][x] = isCellIlluminated(image,xPixelPos,yPixelPos,blackBrightnessLowerBound,blackBrightnessUpperBound,plusMinusSpread,brightnessErrorCount);
             }
         }
         grid.cells = cells;
     }
-    public bool isCellIlluminated(IPixelReadable image,int x, int y,float blackBrightnessLowerBound,float blackBrightnessUpperBound,int plusMinusSpread){
+    public bool isCellIlluminated(IPixelReadable image,int x, int y,float blackBrightnessLowerBound,float blackBrightnessUpperBound,int plusMinusSpread,int brightnessErrorCount){
         var cellColor = image.getPixel(x, y);
         var cellColorPlus = image.getPixel(x + plusMinusSpread, y);
         var cellColorMinus = image.getPixel(x - plusMinusSpread, y);
@@ -145,7 +147,7 @@ public class ImageParser
         brightnessCount += (brightness3 < blackBrightnessLowerBound || brightness3 > blackBrightnessUpperBound) ? 0 : 1;
         brightnessCount += (brightness4 < blackBrightnessLowerBound || brightness4 > blackBrightnessUpperBound) ? 0 : 1;
         brightnessCount += (brightness5 < blackBrightnessLowerBound || brightness5 > blackBrightnessUpperBound) ? 0 : 1;
-        if (brightnessCount < 4||y>971)//allow 2 errors, 971 is height of top row
+        if (brightnessCount < brightnessErrorCount||y>971)//allow 2 errors, 971 is height of top row
         {
             return false;
         }

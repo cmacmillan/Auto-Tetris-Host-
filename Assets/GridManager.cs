@@ -28,6 +28,8 @@ public class GridManager : MonoBehaviour
     public float blackClipLowerBound = .6f;
     [Range(0,1)]
     public float blackClipUpperBound = .65f;
+    [Range(0,5)]
+    public int maxColorSampleErrorCount=4;
 
     void InitGrid()
     {
@@ -109,6 +111,7 @@ public class GridManager : MonoBehaviour
     IPixelReadable texReader;
     AI ai;
     public bool isTraining = true;
+    public bool isVisualizingCurrentParse=false;
     void Start()
     {
         currentState = ProgramState.ManualControl;
@@ -176,7 +179,7 @@ public class GridManager : MonoBehaviour
         GettingInitialBoardInfo=1,
         Playing=2,
         RetryingUpdateGrid=3,
-        
+
     };
 
     private int errorCount=0;
@@ -237,10 +240,10 @@ public class GridManager : MonoBehaviour
             }
             return;
         }
-        if (true){
+        if (isVisualizingCurrentParse){
             texReader.update();
             //parser.updateGridWithImage(texReader, grid1, 742, 94, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
-            parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, false);
+            parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound,7, maxColorSampleErrorCount,false);
             int index=-1;
             //Debug.Log(grid1.depthOfDeepestWell(out index)+"|"+index);
             Debug.Log(grid1.totalDepthOfNearCompletedLines());//+"|"+index);
@@ -277,7 +280,7 @@ public class GridManager : MonoBehaviour
                 nextUpNext = parser.getUpNextColors(texReader,1260,135,1256,228,82,5,30,22);
                 if (hasUpNextChanged(upNext,nextUpNext)){
                     if (!isUsingStorePieceForFirstTime){
-                        parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, 7, false);
+                        parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, 7,maxColorSampleErrorCount,false);
                         //parser.updateGridIncomingDangerousPieces(grid1,texReader,677,245,1015,.1f,48,7);
                         parser.updateGridIncomingDangerousPieces(grid1,texReader,677,1080-1015,1080-245,.1f,48,7);
                         Debug.Log("DANGER:"+grid1.incomingDangerousPieces);
@@ -307,7 +310,7 @@ public class GridManager : MonoBehaviour
                 break;
             case ProgramState.RetryingUpdateGrid:
                 texReader.update();
-                parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, 7, false);
+                parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, 7,maxColorSampleErrorCount ,false);
                 parser.updateGridIncomingDangerousPieces(grid1,texReader,677,1080-1015,1080-245,.1f,48,7);
                 drawGrid(grid1);
                 drawGrid(grid2, true);
