@@ -112,6 +112,7 @@ public class GridManager : MonoBehaviour
     AI ai;
     public bool isTraining = true;
     public bool isVisualizingCurrentParse=false;
+    public bool isPlayingWithKeyboard=false;
     void Start()
     {
         currentState = ProgramState.ManualControl;
@@ -169,16 +170,13 @@ public class GridManager : MonoBehaviour
         }
         drawGrid(grid1);
     }
-    List<int> upNext;
-
-    ProgramState currentState;
-    public int retryCounter=0;
     public int maxRetries = 100;
     enum ProgramState{
         ManualControl=0,
         GettingInitialBoardInfo=1,
         Playing=2,
         RetryingUpdateGrid=3,
+        PlayingWithoutSeeing=4,
 
     };
 
@@ -213,24 +211,53 @@ public class GridManager : MonoBehaviour
     bool hasStoredPieceYet=false;
     bool isUsingStorePieceForFirstTime=false;
     bool breaker=false;
+    List<int> upNext;
+
+    ProgramState currentState;
+    public int retryCounter=0;
+    private int blindMoveCounter=0;
+    private float timeSinceLastBlindMove=0;
+    private bool didLastMoveClearALine=false;
+    public float timeBetweenBlindMoves=1.0f;
+    public float extraTimeBetweenBlindMovesIfLineWasCleared=1.0f;
     //bool isDead=false;
+
+    ///just a class to wrap all the data in
+    internal class AIState{
+        ///<summary>What items are up next based on the last move</summary>
+        internal List<int> expectedUpNext;
+        ///<summary>What items are up next according to what the screen is actually showing</summary>
+        internal List<int> screensUpNext;
+
+        ///<summary>The current piece that is falling</summary>
+        internal int currentPiece;
+        ///<summary>What the grid is according to what the screen is actually showing</summary>
+        internal Grid screensGrid;
+        ///<summary>What we expected the grid to be based on the last move</summary>
+        internal Grid expectedGrid;
+        ///<summary>The number of times we've tried to reparsing the screen's grid to get it to match the expected grid</summary>
+        internal int retryReparseGridCounter;
+    }
+    private AIState state;
+    void RunAI(){
+        if (state==null){//starting up...
+            state=new AIState();
+            state.currentPiece=-1;
+            state.retryReparseGridCounter=0;
+            state.screensUpNext = new List<int>();
+            state.expectedUpNext = new List<int>();
+        }
+    }
     void Update()
     {
-        /*if (true){
-            if (isDead){
-                Debug.Log("DEAD");
-                return;
-            }
-            if (Input.GetKeyDown(KeyCode.Space)){
-                isDead=!grid1.AddGarbageLines(2);
-            }
+        if (isPlayingWithKeyboard){
             stepTimer+=Time.deltaTime;
             if (stepTimer>stepTime){
                 stepTimer=0;
                 runStep();
             }
             return;
-        }*/
+        }
         if (isTraining){
             string message;
             if (threader.messageQueue.Count>0){
@@ -275,17 +302,39 @@ public class GridManager : MonoBehaviour
                     currentState = ProgramState.Playing;
                 }
                 break;
+            case ProgramState.PlayingWithoutSeeing:
+                timeSinceLastBlindMove+=Time.deltaTime;
+                if (timeSinceLastBlindMove>timeBetweenBlindMoves+(didLastMoveClearALine?extraTimeBetweenBlindMovesIfLineWasCleared:0)){
+                    ///make the blind move
+                    makeNextMove(grid2, grid2);//use grid 2
+                    drawGrid(grid2);
+                    drawGrid(grid2, true);
+                    timeSinceLastBlindMove=0.0f;
+                    blindMoveCounter++;
+                    upNext.RemoveAt(0);
+                    upNext = upNext.Append(-1).ToList();
+                    drawUpNext();
+                    if (blindMoveCounter >= 2)
+                    {
+                        currentState = ProgramState.Playing;
+                    }
+                }
+                break;
             case ProgramState.Playing:
                 texReader.update();
                 nextUpNext = parser.getUpNextColors(texReader,1260,135,1256,228,82,5,30,22);
                 if (hasUpNextChanged(upNext,nextUpNext)){
+                    if (upNext.Contains(-1)){///basically just testing if we made any blind moves we need to rebuild upnext
+                        upNext = upNext.Take(1).ToList();
+                        upNext.AddRange(nextUpNext.Take(4));
+                    }
                     if (!isUsingStorePieceForFirstTime){
                         parser.updateGridWithImage(texReader, grid1, 742, 74, 48, 48, 10, 20, blackClipLowerBound, blackClipUpperBound, 7,maxColorSampleErrorCount,false);
                         //parser.updateGridIncomingDangerousPieces(grid1,texReader,677,245,1015,.1f,48,7);
                         parser.updateGridIncomingDangerousPieces(grid1,texReader,677,1080-1015,1080-245,.1f,48,7);
                         Debug.Log("DANGER:"+grid1.incomingDangerousPieces);
                         drawGrid(grid1);
-                        drawGrid(grid2, true);
+                            drawGrid(grid2, true);
                         int doGridsMatch = grid1.DoGridsMatch(grid2);
                         if (doGridsMatch > 0)
                         {
@@ -299,6 +348,10 @@ public class GridManager : MonoBehaviour
                             grid2 = grid1.clone();
                             makeNextMove(grid1, grid2);
                             upNext = nextUpNext;
+                            //upNext.RemoveAt(0);
+                            //upNext.Append(-1);
+                            currentState =  ProgramState.PlayingWithoutSeeing;
+                            blindMoveCounter=0;
                         }
                     }
                     else
@@ -346,7 +399,14 @@ public class GridManager : MonoBehaviour
     }
     public bool hasUpNextChanged(List<int> oldList, List<int> newList){
         int errorCount=0;
-        for (int i=1;i<oldList.Count;i++){
+        int nonNullElementsInOldList = 0;
+        for (int i=0;i<oldList.Count;i++){
+            if (oldList[i]==-1){
+                break;
+            }
+            nonNullElementsInOldList++; 
+        }
+        for (int i=1;i<nonNullElementsInOldList;i++){
             if (oldList[i]!=newList[i-1]){
                 errorCount++;
                 if (errorCount>stackErrorsAllowed){

@@ -268,6 +268,7 @@ public class AI
         var piece = bestMove;
         if (shouldSwap){
             gridToReadFrom.storedPiece = workingPieces[0];
+            gridToWriteTo.storedPiece = workingPieces[0];
         }
         ////Format byte before writing it to microcontroller
         int startingPosition=5-Mathf.CeilToInt(piece.dimension/2.0f);
